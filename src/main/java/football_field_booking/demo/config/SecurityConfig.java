@@ -12,87 +12,75 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-/**
- * Cấu hình Spring Security
- *
- * @EnableWebSecurity       → bật Spring Security
- * @EnableMethodSecurity    → bật @PreAuthorize trong Controller
- */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final NguoiDungService   nguoiDungService;
+    private final NguoiDungService      nguoiDungService;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtAuthFilter      jwtAuthFilter;
+    private final JwtAuthFilter         jwtAuthFilter;
 
-    // ================================================================
-    // Quy tắc bảo vệ URL
-    // ================================================================
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Tắt CSRF — vì dùng JWT (stateless), không cần CSRF token
-            .csrf(AbstractHttpConfigurer::disable)
-
-            // Không dùng Session — JWT tự mang thông tin người dùng
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/**")
             )
 
-            // Quy tắc phân quyền URL
             .authorizeHttpRequests(auth -> auth
-
-                // ── PUBLIC — ai cũng vào được ──────────────────────
+                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/san-bong", "/san-bong/**").permitAll()
+                .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/san-bong").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/san-bong/{id}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/san-bong/tim-kiem").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/san-bong/{id}/lich").permitAll()
-
-                // ── KHACH_HANG ──────────────────────────────────────
-                .requestMatchers(HttpMethod.POST, "/api/dat-san").hasRole("KHACH_HANG")
-                .requestMatchers(HttpMethod.DELETE, "/api/dat-san/*/huy").hasRole("KHACH_HANG")
-
-                // ── CHU_SAN ─────────────────────────────────────────
-                .requestMatchers("/api/san-bong/cua-toi").hasRole("CHU_SAN")
-                .requestMatchers("/api/dat-san/cho-duyet").hasRole("CHU_SAN")
-                .requestMatchers("/api/thong-ke/**").hasAnyRole("CHU_SAN", "ADMIN")
-
-                // ── Còn lại phải đăng nhập ──────────────────────────
+                .requestMatchers(HttpMethod.GET, "/api/san-bong/**").permitAll()
+                .requestMatchers("/dat-san/**").hasRole("KHACH_HANG")
+                .requestMatchers("/chusan/**").hasRole("CHU_SAN")
                 .anyRequest().authenticated()
             )
 
-            // Cắm JWT filter vào trước filter mặc định của Spring
-            // → mỗi request đến, JwtAuthFilter chạy trước để đọc token
+            .formLogin(form -> form
+                .loginPage("/auth/dang-nhap")
+                .loginProcessingUrl("/auth/login")
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .defaultSuccessUrl("/", true)
+                .failureUrl("/auth/dang-nhap?error")
+                .permitAll()
+            )
+
+            .logout(logout -> logout
+                // AntPathRequestMatcher không chỉ định method
+                // → chấp nhận cả GET lẫn POST
+                // → link <a href="/auth/logout"> hoạt động bình thường
+                .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
+                .logoutSuccessUrl("/auth/dang-nhap?logout")
+                .deleteCookies("JSESSIONID")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .permitAll()
+            )
+
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // ================================================================
-    // AuthenticationProvider — dùng email + BCrypt để xác thực
-    // ================================================================
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(nguoiDungService);  // load user bằng email
-        provider.setPasswordEncoder(passwordEncoder);       // so sánh BCrypt hash
+        provider.setUserDetailsService(nguoiDungService);
+        provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
 
-    // ================================================================
-    // AuthenticationManager — dùng trong AuthService để login thủ công
-    // ================================================================
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {

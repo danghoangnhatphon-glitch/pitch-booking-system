@@ -1,20 +1,12 @@
 package football_field_booking.demo.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Dữ liệu client gửi lên khi ĐẶT SÂN
- *
- * Một request có thể đặt NHIỀU CA cùng lúc
- * Ví dụ: đặt sân 1, ngày 01/06, ca 17:30 VÀ 19:00
- *   → sanId = 1
- *   → ngaySuDung = 2025-06-01
- *   → danhSachKhungGioId = [6, 7]
- */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,7 +18,9 @@ public class DatSanRequest {
     private Long sanId;
 
     @NotNull(message = "Vui lòng chọn ngày")
-    @Future(message = "Ngày đặt phải là ngày trong tương lai")
+    @FutureOrPresent(message = "Không thể đặt sân ngày đã qua")
+    // Báo cho Jackson biết format ngày từ JSON: "2025-06-01"
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate ngaySuDung;
 
     @NotEmpty(message = "Vui lòng chọn ít nhất 1 khung giờ")
@@ -35,6 +29,5 @@ public class DatSanRequest {
 
     private String ghiChu;
 
-    // Phương thức thanh toán (có thể null nếu thanh toán tại sân)
     private String phuongThucThanhToan;
 }

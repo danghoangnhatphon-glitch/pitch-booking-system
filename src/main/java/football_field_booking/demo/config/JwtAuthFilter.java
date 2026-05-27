@@ -16,25 +16,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Filter chạy MỘT LẦN cho mỗi request
- * Nhiệm vụ: đọc JWT từ header → xác thực → set vào SecurityContext
- *
- * Luồng hoạt động:
- * Request đến
- *   → đọc header "Authorization: Bearer <token>"
- *   → lấy email từ token
- *   → load NguoiDung từ DB theo email
- *   → kiểm tra token hợp lệ
- *   → set vào SecurityContext (Spring biết ai đang gọi API)
- *   → cho request đi tiếp vào Controller
- */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtService         jwtService;
-    private final NguoiDungService   nguoiDungService;
+    private final JwtService       jwtService;
+    private final NguoiDungService nguoiDungService;
 
     @Override
     protected void doFilterInternal(
@@ -43,44 +30,56 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Đọc header Authorization
         final String authHeader = request.getHeader("Authorization");
 
-        // Không có token hoặc sai định dạng → bỏ qua (public API)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // ── Không có header hoặc không đúng định dạng → bỏ qua
+        // Session login (Thymeleaf form) không có header này → đi thẳng qua
+        if (authHeader == null
+                || !authHeader.startsWith("Bearer ")
+                || authHeader.trim().equals("Bearer")
+                || authHeader.trim().equals("Bearer null")
+                || authHeader.length() <= 7) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Cắt bỏ "Bearer " (7 ký tự) để lấy token thuần
-        final String jwt   = authHeader.substring(7);
-        final String email = jwtService.layEmail(jwt);
+        final String jwt = authHeader.substring(7).trim();
 
-        // Nếu đọc được email VÀ chưa có authentication trong context
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            // Load NguoiDung từ DB
-            UserDetails userDetails = nguoiDungService.loadUserByUsername(email);
-
-            // Kiểm tra token còn hợp lệ không
-            if (jwtService.kiemTraToken(jwt, userDetails)) {
-
-                // Tạo authentication object và đặt vào SecurityContext
-                // → từ đây @AuthenticationPrincipal trong Controller mới hoạt động
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
+        // Kiểm tra token có đúng 2 dấu chấm không (cấu trúc JWT: header.payload.signature)
+        if (jwt.isEmpty() || jwt.equals("null") || countDots(jwt) != 2) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        // Cho request đi tiếp
+        try {
+            final String email = jwtService.layEmail(jwt);
+
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = nguoiDungService.loadUserByUsername(email);
+
+                if (jwtService.kiemTraToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (Exception e) {
+            // Token lỗi → bỏ qua, để Security xử lý tiếp theo
+            // Không throw exception để không phá request của session login
+            logger.warn("JWT validation failed: " + e.getMessage());
+        }
+
         filterChain.doFilter(request, response);
+    }
+
+    private int countDots(String s) {
+        int count = 0;
+        for (char c : s.toCharArray()) {
+            if (c == '.') count++;
+        }
+        return count;
     }
 }

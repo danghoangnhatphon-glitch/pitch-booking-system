@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="page-wrapper">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="main-content">
+  <div class="container">
+
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <p>Quản lý sân bóng và theo dõi doanh thu</p>
+    </div>
+
+    <!-- ── STATS ──────────────────────────────────────── -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Tổng phiếu</div>
+        <div class="stat-value green" th:text="${tongQuan.tongPhieu}">0</div>
+        <div class="stat-sub">Tất cả thời gian</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Doanh thu</div>
+        <div class="stat-value amber"
+             th:text="${#numbers.formatInteger(tongQuan.tongDoanhThu, 3, 'COMMA')} + 'đ'">0đ</div>
+        <div class="stat-sub">Đã thanh toán</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Chờ duyệt</div>
+        <div class="stat-value" th:text="${phieuChoDuyet.size()}">0</div>
+        <div class="stat-sub">Cần xử lý</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Số sân</div>
+        <div class="stat-value" th:text="${danhSachSan.size()}">0</div>
+        <div class="stat-sub">Đang quản lý</div>
+      </div>
+    </div>
+
+    <!-- ── LAYOUT 2 CỘT ───────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+
+      <!-- Phiếu chờ duyệt -->
+      <div>
+        <div class="card">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>⏳ Phiếu chờ duyệt (<span th:text="${phieuChoDuyet.size()}">0</span>)</span>
+          </div>
+
+          <div th:if="${#lists.isEmpty(phieuChoDuyet)}"
+               style="padding:40px;text-align:center;color:var(--slate-400);">
+            ✅ Không có phiếu nào đang chờ
+          </div>
+
+          <div th:unless="${#lists.isEmpty(phieuChoDuyet)}">
+            <div th:each="phieu : ${phieuChoDuyet}"
+                 style="padding:16px 20px;border-bottom:1px solid var(--slate-700);">
+
+              <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;">
+                <div style="flex:1;">
+                  <div style="font-weight:600;color:var(--white);font-size:14px;">
+                    <span th:text="${phieu.tenNguoiDat}">Tên khách</span>
+                    <span style="color:var(--slate-400);font-weight:400;"> · </span>
+                    <span style="color:var(--slate-400);" th:text="${phieu.sdtNguoiDat}">SĐT</span>
+                  </div>
+
+                  <!-- Chi tiết ca -->
+                  <div th:each="ct : ${phieu.danhSachChiTiet}"
+                       style="font-size:13px;color:var(--slate-400);margin-top:4px;">
+                    📍 <span th:text="${ct.tenSan}">Sân</span> —
+                    📅 <span th:text="${#temporals.format(ct.ngaySuDung,'dd/MM')}">01/06</span>
+                    ⏰ <span th:text="${ct.gioBatDau + '-' + ct.gioKetThuc}">17:30-19:00</span>
+                  </div>
+                </div>
+
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--amber);"
+                       th:text="${#numbers.formatInteger(phieu.tongTien,3,'COMMA')} + 'đ'">200,000đ</div>
+                  <div style="display:flex;gap:6px;margin-top:8px;">
+                    <button th:onclick="'duyetPhieu(' + ${phieu.id} + ')'"
+                            class="btn btn-primary btn-sm">Duyệt ✓</button>
+                    <button th:onclick="'tuChoiPhieu(' + ${phieu.id} + ')'"
+                            class="btn btn-danger btn-sm">Từ chối</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cột phải: Danh sách sân -->
+      <div>
+        <div class="card">
+          <div class="card-header">🏟️ Sân của tôi</div>
+          <div th:each="san : ${danhSachSan}"
+               style="padding:14px 16px;border-bottom:1px solid var(--slate-700);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:600;font-size:14px;color:var(--white);" th:text="${san.tenSan}">Sân</div>
+              <div style="font-size:12px;color:var(--slate-400);"
+                   th:text="${san.loaiSan} + ' · ' + ${san.quanHuyen}">Sân 5 · Q.5</div>
+            </div>
+            <span th:switch="${san.trangThai.name()}">
+              <span th:case="'HOAT_DONG'" class="badge badge-approved" style="font-size:11px;">Hoạt động</span>
+              <span th:case="'DONG_CUA'"  class="badge badge-cancelled" style="font-size:11px;">Đóng cửa</span>
+              <span th:case="'BAO_TRI'"   class="badge badge-pending" style="font-size:11px;">Bảo trì</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Doanh thu theo tháng -->
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header">📊 Doanh thu gần đây</div>
+          <div style="padding:16px;">
+            <div th:each="entry : ${doanhThu}"
+                 style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--slate-700);font-size:14px;">
+              <span style="color:var(--slate-400);" th:text="${entry.key}">2025-06</span>
+              <span style="font-weight:600;color:var(--amber);"
+                    th:text="${#numbers.formatInteger(entry.value,3,'COMMA')} + 'đ'">0đ</span>
+            </div>
+            <div th:if="${#maps.isEmpty(doanhThu)}"
+                 style="text-align:center;color:var(--slate-400);padding:16px 0;font-size:13px;">
+              Chưa có dữ liệu
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: toast}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+function duyetPhieu(id) {
+  fetch(`/api/dat-san/${id}/duyet`, {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) { showToast('Duyệt phiếu thành công!'); setTimeout(() => location.reload(), 1000); }
+    else showToast(d.message, 'error');
+  });
+}
+function tuChoiPhieu(id) {
+  if (!confirm('Từ chối phiếu này?')) return;
+  fetch(`/api/dat-san/${id}/huy`, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) { showToast('Đã từ chối phiếu.'); setTimeout(() => location.reload(), 1000); }
+    else showToast(d.message, 'error');
+  });
+}
+</script>
+</body>
+</html>

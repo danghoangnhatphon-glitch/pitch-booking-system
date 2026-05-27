@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments/layout :: head('Trang chủ')}"></head>
+<body class="page-wrapper">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<!-- ── HERO ────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="container hero-content">
+    <h1 class="hero-title">
+      Đặt sân bóng<br>
+      <span class="accent">nhanh — dễ — chắc</span>
+    </h1>
+    <p class="hero-sub">
+      Hàng trăm sân 5, sân 7, sân 11 khắp thành phố.
+      Chọn giờ, đặt ngay, không lo trùng lịch.
+    </p>
+    <a th:href="@{/san-bong}" class="btn btn-primary btn-lg">
+      🔍 Tìm sân ngay
+    </a>
+  </div>
+</section>
+
+<!-- ── MAIN CONTENT ─────────────────────────────────────── -->
+<main class="main-content">
+  <div class="container">
+
+    <!-- Bộ lọc -->
+    <form th:action="@{/san-bong}" method="get" class="filter-bar">
+      <div class="filter-group">
+        <label>Khu vực</label>
+        <select name="quanHuyen" class="form-control" style="width:180px;">
+          <option value="">Tất cả khu vực</option>
+          <option th:each="q : ${danhSachQuan}"
+                  th:value="${q}"
+                  th:text="${q}"
+                  th:selected="${q == quanHuyenFilter}">Quận</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Loại sân</label>
+        <select name="loaiSan" class="form-control" style="width:140px;">
+          <option value="">Tất cả</option>
+          <option value="SAN_5"  th:selected="${'SAN_5'  == loaiSanFilter}">Sân 5</option>
+          <option value="SAN_7"  th:selected="${'SAN_7'  == loaiSanFilter}">Sân 7</option>
+          <option value="SAN_11" th:selected="${'SAN_11' == loaiSanFilter}">Sân 11</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Lọc</button>
+      <a th:href="@{/}" class="btn btn-outline">Xoá lọc</a>
+    </form>
+
+    <!-- Tiêu đề -->
+    <div class="page-header">
+      <h1>Sân bóng đang hoạt động</h1>
+      <p th:text="${danhSachSan.size()} + ' sân phù hợp'">0 sân</p>
+    </div>
+
+    <!-- Danh sách sân -->
+    <div class="san-grid" th:if="${not #lists.isEmpty(danhSachSan)}">
+      <a th:each="san : ${danhSachSan}"
+         th:href="@{/san-bong/{id}(id=${san.id})}"
+         class="card san-card">
+
+        <!-- Ảnh sân -->
+        <div class="san-card-img">
+          <img th:if="${san.anhSan}" th:src="${san.anhSan}" alt="ảnh sân"/>
+          <!-- Placeholder nếu không có ảnh -->
+          <div th:unless="${san.anhSan}"
+               style="height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;">
+            ⚽
+          </div>
+          <span class="san-card-badge"
+                th:text="${san.loaiSan == 'SAN_5'} ? 'Sân 5' :
+                          (${san.loaiSan == 'SAN_7'} ? 'Sân 7' : 'Sân 11')">
+            Sân 5
+          </span>
+        </div>
+
+        <!-- Thông tin -->
+        <div class="san-card-body">
+          <div class="san-card-title" th:text="${san.tenSan}">Tên sân</div>
+
+          <div class="san-card-meta">
+            <span>📍 <span th:text="${san.quanHuyen}">Quận</span></span>
+            <span>👤 <span th:text="${san.tenChuSan}">Chủ sân</span></span>
+          </div>
+
+          <div class="san-card-rating" th:if="${san.diemTrungBinh != null}">
+            ★ <span th:text="${#numbers.formatDecimal(san.diemTrungBinh, 1, 1)}">4.5</span>
+          </div>
+
+          <div class="san-card-price">
+            Từ <span th:text="${#numbers.formatInteger(150000, 3, 'COMMA')}">150,000</span>đ/ca
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Trống -->
+    <div th:if="${#lists.isEmpty(danhSachSan)}"
+         style="text-align:center;padding:64px 20px;color:var(--slate-400);">
+      <div style="font-size:48px;margin-bottom:12px;">🏟️</div>
+      <p style="font-size:16px;">Không tìm thấy sân phù hợp. Thử thay đổi bộ lọc.</p>
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: toast}"></div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head th:replace="~{fragments/layout :: head(${san.tenSan})}"></head>
+<body class="page-wrapper">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="main-content">
+  <div class="container">
+
+    <!-- Breadcrumb -->
+    <div style="font-size:13px;color:var(--slate-400);margin-bottom:20px;">
+      <a th:href="@{/}" style="color:var(--slate-400);">Trang chủ</a> /
+      <a th:href="@{/san-bong}" style="color:var(--slate-400);">Sân bóng</a> /
+      <span th:text="${san.tenSan}" style="color:var(--white);">Tên sân</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:28px;align-items:start;">
+
+      <!-- ── CỘT TRÁI: Thông tin sân + chọn giờ ─────────── -->
+      <div>
+
+        <!-- Ảnh + thông tin sân -->
+        <div class="card" style="margin-bottom:24px;">
+          <div style="height:240px;background:linear-gradient(135deg,var(--green-800),var(--slate-700));position:relative;overflow:hidden;border-radius:var(--radius-md) var(--radius-md) 0 0;">
+            <img th:if="${san.anhSan}" th:src="${san.anhSan}"
+                 style="width:100%;height:100%;object-fit:cover;" alt=""/>
+            <div th:unless="${san.anhSan}"
+                 style="height:100%;display:flex;align-items:center;justify-content:center;font-size:72px;">⚽</div>
+            <span class="san-card-badge" style="top:16px;right:16px;font-size:14px;padding:6px 14px;"
+                  th:text="${san.loaiSan == 'SAN_5'} ? 'Sân 5' : (${san.loaiSan == 'SAN_7'} ? 'Sân 7' : 'Sân 11')">Sân 5</span>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;">
+              <div>
+                <h1 style="font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--white);"
+                    th:text="${san.tenSan}">Tên sân</h1>
+                <div style="display:flex;gap:16px;margin-top:8px;font-size:14px;color:var(--slate-400);">
+                  <span>📍 <span th:text="${san.viTri}">Địa chỉ</span></span>
+                  <span>📞 <span th:text="${san.sdtChuSan}">SĐT</span></span>
+                </div>
+              </div>
+              <div class="san-card-rating" style="font-size:16px;" th:if="${san.diemTrungBinh != null}">
+                ★ <span th:text="${#numbers.formatDecimal(san.diemTrungBinh,1,1)}">4.5</span>
+              </div>
+            </div>
+            <p style="margin-top:12px;color:var(--slate-200);font-size:14px;line-height:1.7;"
+               th:text="${san.moTa}">Mô tả sân...</p>
+          </div>
+        </div>
+
+        <!-- ── CHỌN NGÀY ──────────────────────────────── -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">📅 Chọn ngày thi đấu</div>
+          <div class="card-body">
+            <input type="date" id="ngayChon" class="form-control"
+                   style="max-width:240px;"
+                   th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}"
+                   th:value="${ngayChon != null} ? ${ngayChon} : ${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}"
+                   onchange="taiLichSan(this.value)"/>
+          </div>
+        </div>
+
+        <!-- ── CHỌN GIỜ — GIAO DIỆN CGV ──────────────── -->
+        <div class="card">
+          <div class="card-header">⏰ Chọn khung giờ</div>
+          <div class="card-body">
+
+            <!-- Chú thích màu sắc -->
+            <div class="slot-legend">
+              <div class="slot-legend-item">
+                <div class="slot-legend-dot available"></div> Còn trống
+              </div>
+              <div class="slot-legend-item">
+                <div class="slot-legend-dot selected"></div> Đang chọn
+              </div>
+              <div class="slot-legend-item">
+                <div class="slot-legend-dot booked"></div> Đã đặt
+              </div>
+              <div class="slot-legend-item">
+                <div class="slot-legend-dot peak"></div> Giờ cao điểm
+              </div>
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="slot-loading"
+                 style="text-align:center;padding:32px;color:var(--slate-400);display:none;">
+              <div style="font-size:24px;margin-bottom:8px;">⏳</div>
+              Đang tải lịch sân...
+            </div>
+
+            <!-- Grid khung giờ — sẽ được render bởi JS -->
+            <div class="slot-grid" id="slot-grid">
+              <!-- Render từ Thymeleaf lần đầu -->
+              <div th:each="kg : ${danhSachKhungGio}"
+                   th:attr="data-id=${kg.khungGioId},
+                            data-gia=${kg.donGia},
+                            data-label=${kg.label}"
+                   th:classappend="${kg.conTrong} ? ' available' : ' booked'"
+                   class="slot-item">
+
+                <div class="slot-time" th:text="${kg.label}">17:30 - 19:00</div>
+                <div class="slot-price"
+                     th:text="${#numbers.formatInteger(kg.donGia, 3, 'COMMA')} + 'đ'">200,000đ</div>
+                <div th:if="${kg.laGioCaoDiem}" class="slot-peak-badge">CAO ĐIỂM</div>
+                <div th:unless="${kg.conTrong}"
+                     style="font-size:11px;color:var(--red-400);margin-top:2px;">Đã đặt</div>
+              </div>
+            </div>
+
+            <!-- Thông báo không có giá -->
+            <div th:if="${#lists.isEmpty(danhSachKhungGio)}"
+                 style="text-align:center;padding:32px;color:var(--slate-400);">
+              Sân này chưa có lịch. Vui lòng liên hệ chủ sân.
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- end cột trái -->
+
+      <!-- ── CỘT PHẢI: Tóm tắt đặt sân ─────────────── -->
+      <div>
+        <div class="summary-box" id="summary-box">
+          <div class="summary-title">📋 Tóm tắt đặt sân</div>
+
+          <div class="summary-row">
+            <span>Sân</span>
+            <span th:text="${san.tenSan}" style="font-weight:600;color:var(--white);">Tên sân</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Ngày</span>
+            <span id="summary-ngay" style="font-weight:600;color:var(--white);">—</span>
+          </div>
+
+          <!-- Danh sách khung giờ đã chọn -->
+          <div id="summary-slots" style="margin:12px 0;">
+            <div style="font-size:13px;color:var(--slate-400);text-align:center;padding:8px 0;">
+              Chưa chọn khung giờ nào
+            </div>
+          </div>
+
+          <div class="summary-total">
+            <span>Tổng tiền</span>
+            <span class="price" id="summary-total">0đ</span>
+          </div>
+
+          <!-- Ghi chú -->
+          <div style="margin-top:16px;">
+            <label style="font-size:13px;color:var(--slate-400);display:block;margin-bottom:6px;">Ghi chú (tuỳ chọn)</label>
+            <textarea id="ghiChu" class="form-control" rows="2"
+                      placeholder="Số lượng người, cần thuê thêm đồ..."></textarea>
+          </div>
+
+          <!-- Nút đặt sân -->
+          <button id="btn-dat-san" class="btn btn-primary btn-lg"
+                  style="width:100%;margin-top:16px;justify-content:center;"
+                  onclick="xacNhanDatSan()" disabled>
+            ⚡ Đặt sân ngay
+          </button>
+
+          <!-- Chưa đăng nhập -->
+          <div sec:authorize="isAnonymous()"
+               style="margin-top:12px;text-align:center;font-size:13px;color:var(--slate-400);">
+            <a th:href="@{/auth/dang-nhap}" style="color:var(--green-300);font-weight:600;">Đăng nhập</a>
+            để đặt sân
+          </div>
+
+        </div>
+      </div><!-- end cột phải -->
+
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: toast}"></div>
+
+<script th:inline="javascript">
+  const SAN_ID  = /*[[${san.id}]]*/ 0;
+  const IS_AUTH = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+</script>
+<script th:src="@{/js/main.js}"></script>
+<script th:src="@{/js/dat-san.js}"></script>
+</body>
+</html>

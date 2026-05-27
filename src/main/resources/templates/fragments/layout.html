@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${title} + ' — SânBóng.vn'">SânBóng.vn</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+
+<!-- ── NAVBAR ─────────────────────────────────────────── -->
+<nav class="navbar" th:fragment="navbar">
+  <div class="navbar-inner">
+
+    <!-- Logo -->
+    <a th:href="@{/}" class="navbar-brand">
+      ⚽ SÂN BÓNG<span class="dot">.</span>VN
+    </a>
+
+    <!-- Links -->
+    <ul class="navbar-links">
+      <li><a th:href="@{/}" th:classappend="${currentPage == 'home'} ? 'active'">Trang chủ</a></li>
+      <li><a th:href="@{/san-bong}" th:classappend="${currentPage == 'san-bong'} ? 'active'">Sân bóng</a></li>
+
+      <!-- Chưa đăng nhập -->
+      <li sec:authorize="isAnonymous()">
+        <a th:href="@{/auth/dang-nhap}" class="btn-nav-login">Đăng nhập</a>
+      </li>
+
+      <!-- Đã đăng nhập: KHACH_HANG -->
+      <li sec:authorize="hasRole('KHACH_HANG')">
+        <a th:href="@{/dat-san/lich-su}" th:classappend="${currentPage == 'lich-su'} ? 'active'">Lịch đặt của tôi</a>
+      </li>
+
+      <!-- Đã đăng nhập: CHU_SAN -->
+      <li sec:authorize="hasRole('CHU_SAN')">
+        <a th:href="@{/chusan/dashboard}" th:classappend="${currentPage == 'dashboard'} ? 'active'">Dashboard</a>
+      </li>
+
+      <!-- User dropdown -->
+      <li sec:authorize="isAuthenticated()" class="navbar-user">
+        <div class="avatar" sec:authentication="name" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</div>
+        <span sec:authentication="principal.hoTen" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <a th:href="@{/auth/logout}" style="color:var(--slate-400);font-size:13px;margin-left:4px;">[Thoát]</a>
+      </li>
+    </ul>
+
+  </div>
+</nav>
+
+<!-- ── FOOTER ─────────────────────────────────────────── -->
+<footer th:fragment="footer" style="background:var(--green-900);border-top:1px solid var(--slate-700);padding:32px 20px;margin-top:auto;">
+  <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div class="navbar-brand" style="margin-bottom:6px;">⚽ SÂN BÓNG<span class="dot">.</span>VN</div>
+      <p style="font-size:13px;color:var(--slate-400);">Đặt sân bóng đá nhanh chóng, tiện lợi</p>
+    </div>
+    <p style="font-size:13px;color:var(--slate-400);">© 2025 SânBóng.vn — Đồ án môn học</p>
+  </div>
+</footer>
+
+<!-- ── TOAST ──────────────────────────────────────────── -->
+<div id="toast-container" th:fragment="toast"></div>
+
+</html>

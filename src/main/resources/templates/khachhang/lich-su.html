@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments/layout :: head('Lịch sử đặt sân')}"></head>
+<body class="page-wrapper">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="main-content">
+  <div class="container">
+
+    <div class="page-header">
+      <h1>Lịch đặt của tôi</h1>
+      <p>Toàn bộ lịch sử đặt sân của bạn</p>
+    </div>
+
+    <!-- Không có lịch sử -->
+    <div th:if="${#lists.isEmpty(danhSachPhieu)}"
+         style="text-align:center;padding:64px 20px;color:var(--slate-400);">
+      <div style="font-size:48px;margin-bottom:12px;">📋</div>
+      <p style="font-size:16px;margin-bottom:16px;">Bạn chưa đặt sân nào.</p>
+      <a th:href="@{/san-bong}" class="btn btn-primary">Tìm sân ngay</a>
+    </div>
+
+    <!-- Danh sách phiếu -->
+    <div th:unless="${#lists.isEmpty(danhSachPhieu)}"
+         style="display:flex;flex-direction:column;gap:16px;">
+
+      <div th:each="phieu : ${danhSachPhieu}" class="card">
+        <div class="card-body">
+
+          <!-- Header phiếu -->
+          <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+
+            <div>
+              <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--white);">
+                Phiếu #<span th:text="${phieu.id}">001</span>
+              </div>
+              <div style="font-size:13px;color:var(--slate-400);margin-top:3px;">
+                Đặt ngày <span th:text="${#temporals.format(phieu.createdAt, 'dd/MM/yyyy HH:mm')}">01/06/2025</span>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <!-- Trạng thái phiếu -->
+              <span th:switch="${phieu.trangThai.name()}">
+                <span th:case="'CHO_DUYET'" class="badge badge-pending">⏳ Chờ duyệt</span>
+                <span th:case="'DA_DUYET'"  class="badge badge-approved">✅ Đã duyệt</span>
+                <span th:case="'DA_HUY'"    class="badge badge-cancelled">❌ Đã hủy</span>
+              </span>
+
+              <!-- Trạng thái thanh toán -->
+              <span th:switch="${phieu.trangThaiThanhToan.name()}">
+                <span th:case="'DA_THANH_TOAN'" class="badge badge-paid">💰 Đã thanh toán</span>
+                <span th:case="'CHUA_THANH_TOAN'" class="badge badge-unpaid">💳 Chưa thanh toán</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Chi tiết các ca đặt -->
+          <div style="background:var(--slate-700);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:16px;">
+            <div th:each="ct, stat : ${phieu.danhSachChiTiet}"
+                 style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;"
+                 th:style="${!stat.last} ? 'border-bottom:1px solid var(--slate-600)' : ''">
+              <div>
+                <div style="font-weight:600;color:var(--white);font-size:14px;" th:text="${ct.tenSan}">Tên sân</div>
+                <div style="font-size:13px;color:var(--slate-400);">
+                  📅 <span th:text="${#temporals.format(ct.ngaySuDung, 'dd/MM/yyyy')}">01/06</span>
+                  &nbsp;⏰ <span th:text="${ct.gioBatDau + ' - ' + ct.gioKetThuc}">17:30 - 19:00</span>
+                </div>
+              </div>
+              <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--amber);"
+                   th:text="${#numbers.formatInteger(ct.donGia, 3, 'COMMA')} + 'đ'">200,000đ</div>
+            </div>
+          </div>
+
+          <!-- Footer phiếu -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:800;">
+              Tổng: <span style="color:var(--amber);"
+                          th:text="${#numbers.formatInteger(phieu.tongTien, 3, 'COMMA')} + 'đ'">500,000đ</span>
+            </div>
+
+            <!-- Nút hủy — chỉ hiện khi CHO_DUYET -->
+            <button th:if="${phieu.trangThai.name() == 'CHO_DUYET'}"
+                    th:onclick="'huyPhieu(' + ${phieu.id} + ')'"
+                    class="btn btn-danger btn-sm">
+              Hủy phiếu
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: toast}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+function huyPhieu(phieuId) {
+  if (!confirm('Bạn chắc chắn muốn hủy phiếu này?')) return;
+  fetch(`/api/dat-san/${phieuId}/huy`, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) { showToast('Hủy phiếu thành công!'); setTimeout(() => location.reload(), 1000); }
+    else showToast(data.message, 'error');
+  });
+}
+</script>
+</body>
+</html>
