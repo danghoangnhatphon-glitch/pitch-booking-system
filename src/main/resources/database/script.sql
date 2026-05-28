@@ -197,7 +197,7 @@ GO
 INSERT INTO nguoi_dung (ho_ten, email, mat_khau, so_dien_thoai, vai_tro) VALUES
 (N'Admin Hệ Thống',  'admin@sanbong.vn',   '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0900000001', 'ADMIN'),
 (N'Nguyễn Văn Chủ',  'chusan@sanbong.vn',  '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0900000002', 'CHU_SAN'),
-(N'Trần Văn Khách',  'khach1@gmail.com',   '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '09$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse78', 'KHACH_HANG'),
+(N'Trần Văn Khách',  'khach1@gmail.com',   '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0900033344', 'KHACH_HANG'),
 (N'Lê Thị Bình',     'khach2@gmail.com',   '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0987654321', 'KHACH_HANG');
 GO
 
