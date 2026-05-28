@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class NguoiDungResponse {
-
+    private boolean active;  // ← thêm dòng này
     private Long id;
     private String hoTen;
     private String email;
@@ -31,6 +31,7 @@ public class NguoiDungResponse {
     // ================================================================
     public static NguoiDungResponse from(NguoiDung entity) {
         return NguoiDungResponse.builder()
+                .active(entity.isActive()) // ← thêm dòng này
                 .id(entity.getId())
                 .hoTen(entity.getHoTen())
                 .email(entity.getEmail())
@@ -39,5 +40,6 @@ public class NguoiDungResponse {
                 .vaiTro(entity.getVaiTro())
                 .createdAt(entity.getCreatedAt())
                 .build();
+
     }
 }

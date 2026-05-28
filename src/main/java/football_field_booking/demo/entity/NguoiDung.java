@@ -10,12 +10,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Map với bảng nguoi_dung
- *
- * Implement UserDetails để Spring Security dùng trực tiếp
- * → không cần viết thêm lớp wrapper riêng
- */
 @Entity
 @Table(name = "nguoi_dung")
 @Getter
@@ -26,13 +20,12 @@ import java.util.List;
 public class NguoiDung implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)  // map với IDENTITY(1,1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "ho_ten", nullable = false, length = 100)
     private String hoTen;
 
-    // unique = true → Hibernate tự tạo unique constraint nếu ddl-auto=create
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
@@ -42,8 +35,6 @@ public class NguoiDung implements UserDetails {
     @Column(name = "so_dien_thoai", length = 15)
     private String soDienThoai;
 
-    // EnumType.STRING → lưu "KHACH_HANG" vào DB thay vì số 0,1,2
-    // Nếu dùng ORDINAL, thêm role vào giữa sẽ sai hết data cũ
     @Enumerated(EnumType.STRING)
     @Column(name = "vai_tro", nullable = false, length = 20)
     private VaiTro vaiTro = VaiTro.KHACH_HANG;
@@ -54,54 +45,39 @@ public class NguoiDung implements UserDetails {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
-    // updatable = false → created_at không bị đổi khi UPDATE
+    // ── Thông tin ngân hàng (chỉ dùng cho CHU_SAN) ──────────
+    @Column(name = "ten_ngan_hang", length = 100)
+    private String tenNganHang;
+
+    @Column(name = "so_tai_khoan", length = 30)
+    private String soTaiKhoan;
+
+    @Column(name = "ten_chu_tk", length = 100)
+    private String tenChuTk;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Tự gán thời gian trước khi INSERT lần đầu
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
 
-    // ================================================================
-    // Quan hệ: 1 người dùng có nhiều phiếu đặt sân
-    // mappedBy = tên field trong PhieuDatSan trỏ về NguoiDung
-    // fetch = LAZY → không load toàn bộ phiếu khi chỉ cần info người dùng
-    // ================================================================
     @OneToMany(mappedBy = "nguoiDat", fetch = FetchType.LAZY)
     private List<PhieuDatSan> danhSachPhieu;
 
-    // ================================================================
-    // UserDetails interface — Spring Security đọc các method này
-    // ================================================================
+    // ── UserDetails ──────────────────────────────────────────
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // "ROLE_" prefix là quy ước của Spring Security
         return List.of(new SimpleGrantedAuthority("ROLE_" + vaiTro.name()));
     }
 
-    @Override
-    public String getPassword() {
-        return matKhau;  // Spring Security gọi getPassword() để lấy hash
-    }
-
-    @Override
-    public String getUsername() {
-        return email;  // dùng email làm username để đăng nhập
-    }
-
-    @Override public boolean isAccountNonExpired()  { return true; }
-    @Override public boolean isAccountNonLocked()   { return isActive; }
+    @Override public String getPassword()              { return matKhau; }
+    @Override public String getUsername()              { return email; }
+    @Override public boolean isAccountNonExpired()     { return true; }
+    @Override public boolean isAccountNonLocked()      { return isActive; }
     @Override public boolean isCredentialsNonExpired() { return true; }
-    @Override public boolean isEnabled()            { return isActive; }
+    @Override public boolean isEnabled()               { return isActive; }
 
-    // ================================================================
-    // Enum VaiTro — đặt trong cùng file cho gọn
-    // ================================================================
-    public enum VaiTro {
-        KHACH_HANG,
-        CHU_SAN,
-        ADMIN
-    }
+    public enum VaiTro { KHACH_HANG, CHU_SAN, ADMIN }
 }

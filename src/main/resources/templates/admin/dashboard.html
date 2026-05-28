@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments/layout :: head('Admin Dashboard')}"></head>
+<body class="page-wrapper">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="main-content">
+  <div class="container">
+
+    <div class="page-header">
+      <h1>⚙️ Quản trị hệ thống</h1>
+      <p>Toàn quyền quản lý người dùng, sân bóng và đơn đặt sân</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Tổng người dùng</div>
+        <div class="stat-value green" th:text="${tongNguoiDung}">0</div>
+        <div class="stat-sub">Tất cả tài khoản</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tổng sân bóng</div>
+        <div class="stat-value amber" th:text="${tongSan}">0</div>
+        <div class="stat-sub">Đang hoạt động</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tổng phiếu đặt</div>
+        <div class="stat-value" th:text="${tongPhieu}">0</div>
+        <div class="stat-sub">Tất cả thời gian</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Doanh thu hệ thống</div>
+        <div class="stat-value green"
+             th:text="${#numbers.formatInteger(tongDoanhThu, 3, 'COMMA')} + 'đ'">0đ</div>
+        <div class="stat-sub">Đã thanh toán</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+      <!-- Danh sách người dùng -->
+      <div class="card">
+        <div class="card-header">👥 Người dùng gần đây</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="nd : ${danhSachNguoiDung}">
+                <td th:text="${nd.hoTen}">Tên</td>
+                <td style="font-size:13px;" th:text="${nd.email}">email</td>
+                <td>
+                  <span th:switch="${nd.vaiTro.name()}">
+                    <span th:case="'ADMIN'"      class="badge badge-approved">Admin</span>
+                    <span th:case="'CHU_SAN'"    class="badge badge-pending">Chủ sân</span>
+                    <span th:case="'KHACH_HANG'" class="badge" style="background:var(--slate-700);color:var(--slate-200);border:1px solid var(--slate-600);">Khách</span>
+                  </span>
+                </td>
+                <td>
+                  <span th:if="${nd.active}" class="badge badge-approved" style="font-size:11px;">Hoạt động</span>
+                  <span th:unless="${nd.active}" class="badge badge-cancelled" style="font-size:11px;">Bị khóa</span>
+                </td>
+                <td>
+                  <button th:if="${nd.active}"
+                          th:onclick="'khoaTaiKhoan(' + ${nd.id} + ')'"
+                          class="btn btn-danger btn-sm">Khóa</button>
+                  <button th:unless="${nd.active}"
+                          th:onclick="'moKhoaTaiKhoan(' + ${nd.id} + ')'"
+                          class="btn btn-primary btn-sm">Mở khóa</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Danh sách tất cả sân -->
+      <div class="card">
+        <div class="card-header">🏟️ Tất cả sân bóng</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tên sân</th>
+                <th>Loại</th>
+                <th>Chủ sân</th>
+                <th>Trạng thái</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="san : ${danhSachSan}">
+                <td th:text="${san.tenSan}">Sân</td>
+                <td th:text="${san.loaiSan}">Sân 5</td>
+                <td style="font-size:13px;" th:text="${san.tenChuSan}">Chủ</td>
+                <td>
+                  <span th:switch="${san.trangThai.name()}">
+                    <span th:case="'HOAT_DONG'" class="badge badge-approved" style="font-size:11px;">Hoạt động</span>
+                    <span th:case="'DONG_CUA'"  class="badge badge-cancelled" style="font-size:11px;">Đóng cửa</span>
+                    <span th:case="'BAO_TRI'"   class="badge badge-pending" style="font-size:11px;">Bảo trì</span>
+                  </span>
+                </td>
+                <td>
+                  <button th:onclick="'xoaSan(' + ${san.id} + ')'"
+                          class="btn btn-danger btn-sm">Xóa</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: toast}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+function khoaTaiKhoan(id) {
+  if (!confirm('Khóa tài khoản này?')) return;
+  fetch(`/api/admin/nguoi-dung/${id}/khoa`, { method: 'PATCH' })
+    .then(r => r.json())
+    .then(d => { if(d.success) { showToast('Đã khóa tài khoản'); setTimeout(()=>location.reload(),1000); } else showToast(d.message,'error'); });
+}
+function moKhoaTaiKhoan(id) {
+  fetch(`/api/admin/nguoi-dung/${id}/mo-khoa`, { method: 'PATCH' })
+    .then(r => r.json())
+    .then(d => { if(d.success) { showToast('Đã mở khóa'); setTimeout(()=>location.reload(),1000); } else showToast(d.message,'error'); });
+}
+function xoaSan(id) {
+  if (!confirm('Xóa sân này khỏi hệ thống?')) return;
+  fetch(`/api/admin/san-bong/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(d => { if(d.success) { showToast('Đã xóa sân'); setTimeout(()=>location.reload(),1000); } else showToast(d.message,'error'); });
+}
+</script>
+</body>
+</html>

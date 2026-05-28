@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments/layout :: head('Thanh toán cọc')}"></head>
+<body class="page-wrapper">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="main-content">
+  <div class="container" style="max-width:640px;">
+
+    <div class="page-header">
+      <h1>💳 Thanh toán đặt cọc</h1>
+      <p>Chuyển khoản 30% để xác nhận giữ sân</p>
+    </div>
+
+    <!-- Trạng thái phiếu -->
+    <div th:switch="${phieu.trangThai.name()}">
+      <div th:case="'CHO_DUYET'" class="alert alert-info">
+        ⏳ Phiếu đang chờ chủ sân duyệt — chưa thể thanh toán cọc
+      </div>
+      <div th:case="'DA_HUY'" class="alert alert-error">
+        ❌ Phiếu đã bị hủy — không thể thanh toán
+      </div>
+    </div>
+
+    <!-- Chỉ hiện khi DA_DUYET -->
+    <div th:if="${phieu.trangThai.name() == 'DA_DUYET'}">
+
+      <!-- Đã cọc rồi -->
+      <div th:if="${phieu.trangThaiCoc != null and phieu.trangThaiCoc.name() == 'DA_COC'}"
+           class="alert alert-success">
+        ✅ Bạn đã đặt cọc thành công lúc
+        <span th:text="${#temporals.format(phieu.thoiGianCoc, 'HH:mm dd/MM/yyyy')}">...</span>
+      </div>
+
+      <!-- Chưa cọc → hiện QR -->
+      <div th:if="${phieu.trangThaiCoc == null or phieu.trangThaiCoc.name() == 'CHUA_COC'}">
+
+        <!-- Thông tin phiếu -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">📋 Thông tin đặt sân</div>
+          <div class="card-body">
+            <div th:each="ct : ${phieu.danhSachChiTiet}"
+                 style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--slate-700);font-size:14px;">
+              <span style="color:var(--slate-200);">
+                🏟️ <span th:text="${ct.tenSan}">Sân</span> —
+                ⏰ <span th:text="${ct.gioBatDau + ' - ' + ct.gioKetThuc}">17:30</span>
+                📅 <span th:text="${#temporals.format(ct.ngaySuDung,'dd/MM/yyyy')}">01/06</span>
+              </span>
+              <span style="color:var(--amber);font-weight:600;"
+                    th:text="${#numbers.formatInteger(ct.donGia,3,'COMMA')} + 'đ'">0đ</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:15px;">
+              <span style="color:var(--slate-200);">Tổng tiền sân</span>
+              <span style="font-weight:700;color:var(--white);"
+                    th:text="${#numbers.formatInteger(phieu.tongTien,3,'COMMA')} + 'đ'">0đ</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:12px;border-top:2px solid var(--green-700);">
+              <span style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--white);">
+                Tiền cọc 30%
+              </span>
+              <span style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--amber);"
+                    th:text="${#numbers.formatInteger(phieu.tienCoc,3,'COMMA')} + 'đ'"
+                    id="so-tien-coc">0đ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thông tin chuyển khoản + QR -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">🏦 Thông tin chuyển khoản</div>
+          <div class="card-body">
+
+            <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;">
+
+              <!-- Thông tin tài khoản -->
+              <div>
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:12px;color:var(--slate-400);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Ngân hàng</div>
+                  <div style="font-size:18px;font-weight:700;color:var(--white);"
+                       th:text="${tenNganHang}">Vietcombank</div>
+                </div>
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:12px;color:var(--slate-400);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Số tài khoản</div>
+                  <div style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--amber);letter-spacing:2px;"
+                       th:text="${soTaiKhoan}" id="so-tk">1234567890</div>
+                  <button onclick="copyStk()" class="btn btn-outline btn-sm" style="margin-top:6px;">
+                    📋 Copy số TK
+                  </button>
+                </div>
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:12px;color:var(--slate-400);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Chủ tài khoản</div>
+                  <div style="font-size:16px;font-weight:600;color:var(--white);"
+                       th:text="${tenChuTk}">TEN CHU TK</div>
+                </div>
+                <div>
+                  <div style="font-size:12px;color:var(--slate-400);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Nội dung chuyển khoản</div>
+                  <div style="background:var(--slate-700);padding:10px 14px;border-radius:var(--radius-sm);font-weight:600;color:var(--green-300);"
+                       th:text="'COC SAN ' + ${phieu.id}" id="noi-dung">COC SAN 1</div>
+                  <button onclick="copyNoiDung()" class="btn btn-outline btn-sm" style="margin-top:6px;">
+                    📋 Copy nội dung
+                  </button>
+                </div>
+              </div>
+
+              <!-- QR Code -->
+              <div style="text-align:center;">
+                <div style="background:white;padding:12px;border-radius:var(--radius-md);display:inline-block;">
+                  <!-- QR VietQR tự động generate từ thông tin tài khoản -->
+                  <img th:src="'https://img.vietqr.io/image/' + ${maNganHang} + '-' + ${soTaiKhoan} + '-compact2.png?amount=' + ${phieu.tienCoc} + '&addInfo=COC+SAN+' + ${phieu.id} + '&accountName=' + ${tenChuTk}"
+                       style="width:180px;height:180px;" alt="QR chuyển khoản"/>
+                </div>
+                <div style="font-size:12px;color:var(--slate-400);margin-top:8px;">Quét mã để chuyển khoản</div>
+              </div>
+
+            </div>
+
+            <!-- Hướng dẫn -->
+            <div style="background:var(--slate-700);border-radius:var(--radius-sm);padding:14px;margin-top:16px;font-size:13px;color:var(--slate-200);line-height:1.8;">
+              <strong style="color:var(--amber);">⚠️ Lưu ý:</strong><br>
+              1. Chuyển khoản đúng số tiền và nội dung<br>
+              2. Sau khi chuyển, bấm nút <strong>"Tôi đã chuyển khoản"</strong> bên dưới<br>
+              3. Chủ sân sẽ xác nhận trong vòng 30 phút
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Nút xác nhận -->
+        <button onclick="xacNhanDaChuyenKhoan()" class="btn btn-primary btn-lg"
+                style="width:100%;justify-content:center;">
+          ✅ Tôi đã chuyển khoản
+        </button>
+
+        <p style="text-align:center;font-size:13px;color:var(--slate-400);margin-top:12px;">
+          Chưa chuyển khoản? <a th:href="@{/dat-san/lich-su}" style="color:var(--green-300);">Quay lại lịch sử</a>
+        </p>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: toast}"></div>
+
+<script th:inline="javascript">
+  const PHIEU_ID = /*[[${phieu.id}]]*/ 0;
+  const SO_TK    = /*[[${soTaiKhoan}]]*/ '';
+  const NOI_DUNG = /*[[${'COC SAN ' + phieu.id}]]*/ '';
+</script>
+<script th:src="@{/js/main.js}"></script>
+<script>
+function copyStk() {
+  navigator.clipboard.writeText(SO_TK);
+  showToast('Đã copy số tài khoản!');
+}
+function copyNoiDung() {
+  navigator.clipboard.writeText(NOI_DUNG);
+  showToast('Đã copy nội dung chuyển khoản!');
+}
+function xacNhanDaChuyenKhoan() {
+  if (!confirm('Bạn xác nhận đã chuyển khoản đặt cọc?')) return;
+  fetch(`/dat-san/${PHIEU_ID}/xac-nhan-coc`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        showToast('Xác nhận thành công! Chờ chủ sân kiểm tra.');
+        setTimeout(() => location.reload(), 1500);
+      } else showToast(d.message, 'error');
+    });
+}
+</script>
+</body>
+</html>

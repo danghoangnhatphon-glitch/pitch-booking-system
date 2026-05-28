@@ -1,161 +1,311 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
-<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<head th:replace="~{fragments/layout :: head('Dashboard Chủ Sân')}"></head>
 <body class="page-wrapper">
-
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
 <main class="main-content">
   <div class="container">
 
-    <div class="page-header">
-      <h1>Dashboard</h1>
-      <p>Quản lý sân bóng và theo dõi doanh thu</p>
+    <!-- Tab navigation -->
+    <div style="display:flex;gap:8px;margin-bottom:28px;border-bottom:1px solid var(--slate-700);padding-bottom:0;">
+      <button onclick="doiTab('tab-tong-quan')" id="btn-tong-quan"
+              class="tab-btn active-tab">📊 Tổng quan</button>
+      <button onclick="doiTab('tab-phieu')" id="btn-phieu"
+              class="tab-btn">📋 Phiếu đặt
+        <span th:if="${phieuChoDuyet.size() > 0}"
+              style="background:var(--red-400);color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"
+              th:text="${phieuChoDuyet.size()}">0</span>
+      </button>
+      <button onclick="doiTab('tab-san')" id="btn-san"
+              class="tab-btn">🏟️ Quản lý sân</button>
+      <button onclick="doiTab('tab-nganhang')" id="btn-nganhang"
+              class="tab-btn">🏦 Ngân hàng</button>
     </div>
 
-    <!-- ── STATS ──────────────────────────────────────── -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Tổng phiếu</div>
-        <div class="stat-value green" th:text="${tongQuan.tongPhieu}">0</div>
-        <div class="stat-sub">Tất cả thời gian</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Doanh thu</div>
-        <div class="stat-value amber"
-             th:text="${#numbers.formatInteger(tongQuan.tongDoanhThu, 3, 'COMMA')} + 'đ'">0đ</div>
-        <div class="stat-sub">Đã thanh toán</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Chờ duyệt</div>
-        <div class="stat-value" th:text="${phieuChoDuyet.size()}">0</div>
-        <div class="stat-sub">Cần xử lý</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Số sân</div>
-        <div class="stat-value" th:text="${danhSachSan.size()}">0</div>
-        <div class="stat-sub">Đang quản lý</div>
-      </div>
-    </div>
-
-    <!-- ── LAYOUT 2 CỘT ───────────────────────────────── -->
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
-
-      <!-- Phiếu chờ duyệt -->
-      <div>
-        <div class="card">
-          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>⏳ Phiếu chờ duyệt (<span th:text="${phieuChoDuyet.size()}">0</span>)</span>
-          </div>
-
-          <div th:if="${#lists.isEmpty(phieuChoDuyet)}"
-               style="padding:40px;text-align:center;color:var(--slate-400);">
-            ✅ Không có phiếu nào đang chờ
-          </div>
-
-          <div th:unless="${#lists.isEmpty(phieuChoDuyet)}">
-            <div th:each="phieu : ${phieuChoDuyet}"
-                 style="padding:16px 20px;border-bottom:1px solid var(--slate-700);">
-
-              <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;">
-                <div style="flex:1;">
-                  <div style="font-weight:600;color:var(--white);font-size:14px;">
-                    <span th:text="${phieu.tenNguoiDat}">Tên khách</span>
-                    <span style="color:var(--slate-400);font-weight:400;"> · </span>
-                    <span style="color:var(--slate-400);" th:text="${phieu.sdtNguoiDat}">SĐT</span>
-                  </div>
-
-                  <!-- Chi tiết ca -->
-                  <div th:each="ct : ${phieu.danhSachChiTiet}"
-                       style="font-size:13px;color:var(--slate-400);margin-top:4px;">
-                    📍 <span th:text="${ct.tenSan}">Sân</span> —
-                    📅 <span th:text="${#temporals.format(ct.ngaySuDung,'dd/MM')}">01/06</span>
-                    ⏰ <span th:text="${ct.gioBatDau + '-' + ct.gioKetThuc}">17:30-19:00</span>
-                  </div>
-                </div>
-
-                <div style="text-align:right;flex-shrink:0;">
-                  <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--amber);"
-                       th:text="${#numbers.formatInteger(phieu.tongTien,3,'COMMA')} + 'đ'">200,000đ</div>
-                  <div style="display:flex;gap:6px;margin-top:8px;">
-                    <button th:onclick="'duyetPhieu(' + ${phieu.id} + ')'"
-                            class="btn btn-primary btn-sm">Duyệt ✓</button>
-                    <button th:onclick="'tuChoiPhieu(' + ${phieu.id} + ')'"
-                            class="btn btn-danger btn-sm">Từ chối</button>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
+    <!-- ── TAB 1: TỔNG QUAN ─────────────────────────────── -->
+    <div id="tab-tong-quan">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Tổng phiếu</div>
+          <div class="stat-value green" th:text="${tongQuan.tongPhieu}">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Doanh thu</div>
+          <div class="stat-value amber"
+               th:text="${#numbers.formatInteger(tongQuan.tongDoanhThu, 3, 'COMMA')} + 'đ'">0đ</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Chờ duyệt</div>
+          <div class="stat-value" th:text="${phieuChoDuyet.size()}">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Số sân</div>
+          <div class="stat-value" th:text="${danhSachSan.size()}">0</div>
         </div>
       </div>
 
-      <!-- Cột phải: Danh sách sân -->
-      <div>
-        <div class="card">
-          <div class="card-header">🏟️ Sân của tôi</div>
-          <div th:each="san : ${danhSachSan}"
-               style="padding:14px 16px;border-bottom:1px solid var(--slate-700);display:flex;justify-content:space-between;align-items:center;">
+      <!-- Doanh thu theo tháng -->
+      <div class="card">
+        <div class="card-header">📊 Doanh thu theo tháng</div>
+        <div style="padding:16px;">
+          <div th:each="entry : ${doanhThu}"
+               style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--slate-700);">
+            <span style="color:var(--slate-200);" th:text="${entry.key}">2025-06</span>
+            <div style="flex:1;margin:0 16px;background:var(--slate-700);border-radius:4px;height:8px;overflow:hidden;">
+              <div style="background:var(--green-400);height:100%;border-radius:4px;"
+                   th:style="'width:' + ${tongQuan.tongDoanhThu > 0 ? (entry.value * 100 / tongQuan.tongDoanhThu) : 0} + '%'"></div>
+            </div>
+            <span style="font-weight:700;color:var(--amber);font-family:var(--font-display);font-size:18px;"
+                  th:text="${#numbers.formatInteger(entry.value, 3, 'COMMA')} + 'đ'">0đ</span>
+          </div>
+          <div th:if="${#maps.isEmpty(doanhThu)}"
+               style="text-align:center;color:var(--slate-400);padding:24px;font-size:14px;">
+            Chưa có dữ liệu doanh thu
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 2: PHIẾU ĐẶT SÂN ────────────────────────── -->
+    <div id="tab-phieu" style="display:none;">
+
+      <div class="page-header">
+        <h1>Phiếu chờ duyệt</h1>
+      </div>
+
+      <div th:if="${#lists.isEmpty(phieuChoDuyet)}"
+           style="text-align:center;padding:48px;color:var(--slate-400);">
+        ✅ Không có phiếu nào đang chờ duyệt
+      </div>
+
+      <div th:each="phieu : ${phieuChoDuyet}" class="card" style="margin-bottom:16px;">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;">
             <div>
-              <div style="font-weight:600;font-size:14px;color:var(--white);" th:text="${san.tenSan}">Sân</div>
-              <div style="font-size:12px;color:var(--slate-400);"
-                   th:text="${san.loaiSan} + ' · ' + ${san.quanHuyen}">Sân 5 · Q.5</div>
+              <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--white);">
+                Phiếu #<span th:text="${phieu.id}">1</span>
+              </div>
+              <div style="font-size:14px;color:var(--slate-200);margin-top:4px;">
+                👤 <strong th:text="${phieu.tenNguoiDat}">Khách</strong>
+                &nbsp;📞 <span th:text="${phieu.sdtNguoiDat}">SĐT</span>
+              </div>
+              <div th:each="ct : ${phieu.danhSachChiTiet}"
+                   style="font-size:13px;color:var(--slate-400);margin-top:4px;">
+                🏟️ <span th:text="${ct.tenSan}">Sân</span> —
+                📅 <span th:text="${#temporals.format(ct.ngaySuDung,'dd/MM/yyyy')}">01/06</span>
+                ⏰ <span th:text="${ct.gioBatDau + ' - ' + ct.gioKetThuc}">17:30-19:00</span>
+              </div>
             </div>
-            <span th:switch="${san.trangThai.name()}">
-              <span th:case="'HOAT_DONG'" class="badge badge-approved" style="font-size:11px;">Hoạt động</span>
-              <span th:case="'DONG_CUA'"  class="badge badge-cancelled" style="font-size:11px;">Đóng cửa</span>
-              <span th:case="'BAO_TRI'"   class="badge badge-pending" style="font-size:11px;">Bảo trì</span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Doanh thu theo tháng -->
-        <div class="card" style="margin-top:16px;">
-          <div class="card-header">📊 Doanh thu gần đây</div>
-          <div style="padding:16px;">
-            <div th:each="entry : ${doanhThu}"
-                 style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--slate-700);font-size:14px;">
-              <span style="color:var(--slate-400);" th:text="${entry.key}">2025-06</span>
-              <span style="font-weight:600;color:var(--amber);"
-                    th:text="${#numbers.formatInteger(entry.value,3,'COMMA')} + 'đ'">0đ</span>
-            </div>
-            <div th:if="${#maps.isEmpty(doanhThu)}"
-                 style="text-align:center;color:var(--slate-400);padding:16px 0;font-size:13px;">
-              Chưa có dữ liệu
+            <div style="text-align:right;">
+              <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--amber);"
+                   th:text="${#numbers.formatInteger(phieu.tongTien,3,'COMMA')} + 'đ'">0đ</div>
+              <div style="font-size:13px;color:var(--slate-400);margin-bottom:10px;">
+                Tiền cọc 30%:
+                <span style="color:var(--green-300);font-weight:600;"
+                      th:text="${#numbers.formatInteger(phieu.tongTien * 0.3, 3, 'COMMA')} + 'đ'">0đ</span>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button th:onclick="'duyetPhieu(' + ${phieu.id} + ', this)'"
+                        class="btn btn-primary">✓ Duyệt</button>
+                <button th:onclick="'tuChoiPhieu(' + ${phieu.id} + ', this)'"
+                        class="btn btn-danger">✗ Từ chối</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
     </div>
+
+    <!-- ── TAB 3: QUẢN LÝ SÂN ───────────────────────────── -->
+    <div id="tab-san" style="display:none;">
+
+      <div class="page-header">
+        <h1>Sân bóng của tôi</h1>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+        <div th:each="san : ${danhSachSan}" class="card">
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+              <div>
+                <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--white);"
+                     th:text="${san.tenSan}">Tên sân</div>
+                <div style="font-size:13px;color:var(--slate-400);margin-top:3px;"
+                     th:text="${san.loaiSan} + ' · ' + ${san.quanHuyen}">Sân 5 · Q.5</div>
+              </div>
+              <span th:switch="${san.trangThai.name()}">
+                <span th:case="'HOAT_DONG'" class="badge badge-approved">Hoạt động</span>
+                <span th:case="'DONG_CUA'"  class="badge badge-cancelled">Đóng cửa</span>
+                <span th:case="'BAO_TRI'"   class="badge badge-pending">Bảo trì</span>
+              </span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button th:onclick="'doiTrangThai(' + ${san.id} + ', \'HOAT_DONG\')'"
+                      class="btn btn-primary btn-sm">Mở cửa</button>
+              <button th:onclick="'doiTrangThai(' + ${san.id} + ', \'DONG_CUA\')'"
+                      class="btn btn-secondary btn-sm">Đóng cửa</button>
+              <button th:onclick="'doiTrangThai(' + ${san.id} + ', \'BAO_TRI\')'"
+                      class="btn btn-amber btn-sm">Bảo trì</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 4: NGÂN HÀNG ─────────────────────────────── -->
+    <div id="tab-nganhang" style="display:none;">
+
+      <div class="page-header">
+        <h1>Thông tin nhận tiền cọc</h1>
+        <p>Khách hàng sẽ thấy thông tin này khi thanh toán cọc</p>
+      </div>
+
+      <div class="card" style="max-width:520px;">
+        <div class="card-body">
+
+          <div th:if="${nguoiDung.tenNganHang != null}"
+               style="background:var(--green-900);border:1px solid var(--green-700);border-radius:var(--radius-md);padding:20px;margin-bottom:20px;">
+            <div style="font-size:13px;color:var(--slate-400);margin-bottom:4px;">Ngân hàng</div>
+            <div style="font-size:18px;font-weight:700;color:var(--white);" th:text="${nguoiDung.tenNganHang}">VCB</div>
+            <div style="font-size:13px;color:var(--slate-400);margin-top:12px;margin-bottom:4px;">Số tài khoản</div>
+            <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--amber);"
+                 th:text="${nguoiDung.soTaiKhoan}">1234567890</div>
+            <div style="font-size:13px;color:var(--slate-400);margin-top:12px;margin-bottom:4px;">Chủ tài khoản</div>
+            <div style="font-size:16px;font-weight:600;color:var(--white);" th:text="${nguoiDung.tenChuTk}">TEN CHU TK</div>
+          </div>
+
+          <!-- Form cập nhật -->
+          <form id="form-nganhang">
+            <div class="form-group">
+              <label>Tên ngân hàng</label>
+              <input type="text" id="tenNganHang" class="form-control"
+                     placeholder="VD: Vietcombank, Techcombank..."
+                     th:value="${nguoiDung.tenNganHang}"/>
+            </div>
+            <div class="form-group">
+              <label>Số tài khoản</label>
+              <input type="text" id="soTaiKhoan" class="form-control"
+                     placeholder="VD: 1234567890"
+                     th:value="${nguoiDung.soTaiKhoan}"/>
+            </div>
+            <div class="form-group">
+              <label>Tên chủ tài khoản (IN HOA)</label>
+              <input type="text" id="tenChuTk" class="form-control"
+                     placeholder="VD: NGUYEN VAN A"
+                     th:value="${nguoiDung.tenChuTk}"
+                     oninput="this.value = this.value.toUpperCase()"/>
+            </div>
+            <button type="button" onclick="capNhatNganHang()"
+                    class="btn btn-primary" style="width:100%;justify-content:center;">
+              💾 Lưu thông tin
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <div th:replace="~{fragments/layout :: toast}"></div>
+
+<style>
+.tab-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--slate-400);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--white); }
+.active-tab {
+  color: var(--green-300) !important;
+  border-bottom-color: var(--green-300) !important;
+}
+</style>
+
 <script th:src="@{/js/main.js}"></script>
 <script>
-function duyetPhieu(id) {
-  fetch(`/api/dat-san/${id}/duyet`, {
-    method: 'PATCH',
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-  })
-  .then(r => r.json())
-  .then(d => {
-    if (d.success) { showToast('Duyệt phiếu thành công!'); setTimeout(() => location.reload(), 1000); }
-    else showToast(d.message, 'error');
+// ── Tab switching ─────────────────────────────────────────
+function doiTab(tabId) {
+  ['tab-tong-quan','tab-phieu','tab-san','tab-nganhang'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
   });
+  ['btn-tong-quan','btn-phieu','btn-san','btn-nganhang'].forEach(id => {
+    document.getElementById(id).classList.remove('active-tab');
+  });
+  document.getElementById(tabId).style.display = 'block';
+  document.getElementById('btn-' + tabId.replace('tab-','')).classList.add('active-tab');
 }
-function tuChoiPhieu(id) {
-  if (!confirm('Từ chối phiếu này?')) return;
-  fetch(`/api/dat-san/${id}/huy`, {
-    method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+
+// ── Duyệt phiếu ──────────────────────────────────────────
+function duyetPhieu(id, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  fetch(`/chusan/duyet-phieu/${id}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        showToast('Duyệt phiếu thành công!');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        showToast(d.message || 'Lỗi khi duyệt', 'error');
+        btn.disabled = false;
+        btn.textContent = '✓ Duyệt';
+      }
+    })
+    .catch(() => { showToast('Lỗi kết nối', 'error'); btn.disabled = false; });
+}
+
+// ── Từ chối phiếu ────────────────────────────────────────
+function tuChoiPhieu(id, btn) {
+  if (!confirm('Từ chối phiếu đặt sân này?')) return;
+  btn.disabled = true;
+  fetch(`/chusan/tu-choi-phieu/${id}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        showToast('Đã từ chối phiếu');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        showToast(d.message || 'Lỗi', 'error');
+        btn.disabled = false;
+      }
+    });
+}
+
+// ── Đổi trạng thái sân ───────────────────────────────────
+function doiTrangThai(sanId, trangThai) {
+  fetch(`/chusan/doi-trang-thai-san?sanId=${sanId}&trangThai=${trangThai}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) { showToast('Cập nhật thành công'); setTimeout(() => location.reload(), 1000); }
+      else showToast(d.message, 'error');
+    });
+}
+
+// ── Cập nhật ngân hàng ───────────────────────────────────
+function capNhatNganHang() {
+  const data = {
+    tenNganHang: document.getElementById('tenNganHang').value,
+    soTaiKhoan:  document.getElementById('soTaiKhoan').value,
+    tenChuTk:    document.getElementById('tenChuTk').value
+  };
+  fetch('/chusan/cap-nhat-ngan-hang', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
   })
   .then(r => r.json())
   .then(d => {
-    if (d.success) { showToast('Đã từ chối phiếu.'); setTimeout(() => location.reload(), 1000); }
+    if (d.success) showToast('Lưu thông tin ngân hàng thành công!');
     else showToast(d.message, 'error');
   });
 }

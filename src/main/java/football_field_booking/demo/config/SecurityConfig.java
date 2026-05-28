@@ -23,25 +23,30 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final NguoiDungService      nguoiDungService;
-    private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtAuthFilter         jwtAuthFilter;
+    private final NguoiDungService          nguoiDungService;
+    private final BCryptPasswordEncoder     passwordEncoder;
+    private final JwtAuthFilter             jwtAuthFilter;
+    private final CustomLoginSuccessHandler loginSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**")
-            )
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/chusan/**", "/admin/**"))
 
             .authorizeHttpRequests(auth -> auth
+                // Static
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/", "/san-bong", "/san-bong/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
+                // Public pages
+                .requestMatchers("/", "/san-bong", "/san-bong/**", "/auth/**").permitAll()
+                // Public API
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/san-bong/**").permitAll()
-                .requestMatchers("/dat-san/**").hasRole("KHACH_HANG")
+                // Admin
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // Chủ sân
                 .requestMatchers("/chusan/**").hasRole("CHU_SAN")
+                // Khách hàng
+                .requestMatchers("/dat-san/**").hasRole("KHACH_HANG")
                 .anyRequest().authenticated()
             )
 
@@ -50,15 +55,13 @@ public class SecurityConfig {
                 .loginProcessingUrl("/auth/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/", true)
+                // Dùng handler tùy chỉnh → redirect đúng trang theo role
+                .successHandler(loginSuccessHandler)
                 .failureUrl("/auth/dang-nhap?error")
                 .permitAll()
             )
 
             .logout(logout -> logout
-                // AntPathRequestMatcher không chỉ định method
-                // → chấp nhận cả GET lẫn POST
-                // → link <a href="/auth/logout"> hoạt động bình thường
                 .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
                 .logoutSuccessUrl("/auth/dang-nhap?logout")
                 .deleteCookies("JSESSIONID")
