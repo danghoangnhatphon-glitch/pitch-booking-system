@@ -9,13 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-/**
- * Sau khi đăng nhập thành công → redirect đúng trang theo role
- *
- * ADMIN      → /admin/dashboard
- * CHU_SAN    → /chusan/dashboard
- * KHACH_HANG → /
- */
+
 @Component
 public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
 

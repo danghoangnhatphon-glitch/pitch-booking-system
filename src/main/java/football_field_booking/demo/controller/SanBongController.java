@@ -1,5 +1,6 @@
 package football_field_booking.demo.controller;
 
+import football_field_booking.demo.dto.request.SanBongRequest;
 import football_field_booking.demo.dto.request.TimSanRequest;
 import football_field_booking.demo.dto.response.ApiResponse;
 import football_field_booking.demo.dto.response.KhungGioTrangThaiResponse;
@@ -24,33 +25,25 @@ public class SanBongController {
 
     private final SanBongService sanBongService;
 
-    // ================================================================
-    // GET /api/san-bong
-    // Lấy tất cả sân đang hoạt động — ai cũng xem được (public)
-    // ================================================================
     @GetMapping
     public ResponseEntity<ApiResponse<List<SanBongResponse>>> layTatCaSan() {
         return ResponseEntity.ok(ApiResponse.ok(sanBongService.layTatCaSan()));
     }
 
-    // ================================================================
-    // GET /api/san-bong/{id}
-    // Chi tiết 1 sân — public
-    // ================================================================
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SanBongResponse>> layChiTiet(
             @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(sanBongService.layChiTiet(id)));
     }
 
-    // ================================================================
-    // GET /api/san-bong/tim-kiem?quanHuyen=Quận 5&loaiSan=SAN_5
-    // Tìm sân theo bộ lọc — public
-    // ================================================================
     @GetMapping("/tim-kiem")
     public ResponseEntity<ApiResponse<List<SanBongResponse>>> timSan(
             @RequestParam(required = false) String quanHuyen,
             @RequestParam(required = false) SanBong.LoaiSan loaiSan) {
+
+        if (quanHuyen != null && quanHuyen.trim().isEmpty()) {
+            quanHuyen = null;
+        }
 
         TimSanRequest request = TimSanRequest.builder()
                 .quanHuyen(quanHuyen)
@@ -60,11 +53,6 @@ public class SanBongController {
         return ResponseEntity.ok(ApiResponse.ok(sanBongService.timSan(request)));
     }
 
-    // ================================================================
-    // GET /api/san-bong/{id}/lich?ngay=2025-06-01
-    // Xem lịch sân theo ngày — ai cũng xem được (public)
-    // Đây là API cho UI chọn giờ như chọn ghế rạp phim
-    // ================================================================
     @GetMapping("/{id}/lich")
     public ResponseEntity<ApiResponse<List<KhungGioTrangThaiResponse>>> layLichSan(
             @PathVariable Long id,
@@ -73,27 +61,16 @@ public class SanBongController {
         return ResponseEntity.ok(ApiResponse.ok(sanBongService.layLichSan(id, ngay)));
     }
 
-    // ================================================================
-    // GET /api/san-bong/cua-toi
-    // Chủ sân xem danh sách sân của mình
-    // @PreAuthorize → chỉ CHU_SAN mới vào được (Security check)
-    // ================================================================
     @GetMapping("/cua-toi")
     @PreAuthorize("hasRole('CHU_SAN')")
     public ResponseEntity<ApiResponse<List<SanBongResponse>>> laySanCuaToi(
             @AuthenticationPrincipal NguoiDung nguoiDung) {
 
-        // @AuthenticationPrincipal → Spring tự inject người đang đăng nhập
-        // Không cần query DB lại, lấy trực tiếp từ Security context
         return ResponseEntity.ok(
-            ApiResponse.ok(sanBongService.laySanCuaChuSan(nguoiDung.getId()))
+                ApiResponse.ok(sanBongService.laySanCuaChuSan(nguoiDung.getId()))
         );
     }
 
-    // ================================================================
-    // PATCH /api/san-bong/{id}/trang-thai?trangThai=DONG_CUA
-    // Chủ sân đổi trạng thái sân
-    // ================================================================
     @PatchMapping("/{id}/trang-thai")
     @PreAuthorize("hasRole('CHU_SAN')")
     public ResponseEntity<ApiResponse<SanBongResponse>> doiTrangThai(
@@ -102,8 +79,19 @@ public class SanBongController {
             @AuthenticationPrincipal NguoiDung nguoiDung) {
 
         return ResponseEntity.ok(ApiResponse.ok(
-            "Cập nhật trạng thái thành công",
-            sanBongService.doiTrangThai(id, trangThai, nguoiDung.getId())
+                "Cập nhật trạng thái thành công",
+                sanBongService.doiTrangThai(id, trangThai, nguoiDung.getId())
+        ));
+    }
+
+    @PostMapping("/luu")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<SanBongResponse>> luuSan(
+            @RequestBody SanBongRequest request) {
+
+        return ResponseEntity.ok(ApiResponse.ok(
+                request.getId() == null ? "Thêm sân thành công" : "Cập nhật sân thành công",
+                sanBongService.luuSanBong(request)
         ));
     }
 }

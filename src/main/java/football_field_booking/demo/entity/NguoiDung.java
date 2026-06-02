@@ -45,7 +45,6 @@ public class NguoiDung implements UserDetails {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
-    // ── Thông tin ngân hàng (chỉ dùng cho CHU_SAN) ──────────
     @Column(name = "ten_ngan_hang", length = 100)
     private String tenNganHang;
 
@@ -66,7 +65,6 @@ public class NguoiDung implements UserDetails {
     @OneToMany(mappedBy = "nguoiDat", fetch = FetchType.LAZY)
     private List<PhieuDatSan> danhSachPhieu;
 
-    // ── UserDetails ──────────────────────────────────────────
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + vaiTro.name()));

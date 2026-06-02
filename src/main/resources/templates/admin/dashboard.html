@@ -12,137 +12,179 @@
       <p>Toàn quyền quản lý người dùng, sân bóng và đơn đặt sân</p>
     </div>
 
-    <!-- Stats -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Tổng người dùng</div>
         <div class="stat-value green" th:text="${tongNguoiDung}">0</div>
-        <div class="stat-sub">Tất cả tài khoản</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Tổng sân bóng</div>
         <div class="stat-value amber" th:text="${tongSan}">0</div>
-        <div class="stat-sub">Đang hoạt động</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Tổng phiếu đặt</div>
         <div class="stat-value" th:text="${tongPhieu}">0</div>
-        <div class="stat-sub">Tất cả thời gian</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Doanh thu hệ thống</div>
-        <div class="stat-value green"
-             th:text="${#numbers.formatInteger(tongDoanhThu, 3, 'COMMA')} + 'đ'">0đ</div>
-        <div class="stat-sub">Đã thanh toán</div>
+        <div class="stat-label">Doanh thu</div>
+        <div class="stat-value green" th:text="${#numbers.formatInteger(tongDoanhThu, 3, 'COMMA')} + 'đ'">0đ</div>
       </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-
-      <!-- Danh sách người dùng -->
       <div class="card">
         <div class="card-header">👥 Người dùng gần đây</div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>Họ tên</th>
-                <th>Email</th>
-                <th>Vai trò</th>
-                <th>Trạng thái</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Họ tên</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead>
             <tbody>
-              <tr th:each="nd : ${danhSachNguoiDung}">
-                <td th:text="${nd.hoTen}">Tên</td>
-                <td style="font-size:13px;" th:text="${nd.email}">email</td>
-                <td>
-                  <span th:switch="${nd.vaiTro.name()}">
-                    <span th:case="'ADMIN'"      class="badge badge-approved">Admin</span>
-                    <span th:case="'CHU_SAN'"    class="badge badge-pending">Chủ sân</span>
-                    <span th:case="'KHACH_HANG'" class="badge" style="background:var(--slate-700);color:var(--slate-200);border:1px solid var(--slate-600);">Khách</span>
-                  </span>
-                </td>
-                <td>
-                  <span th:if="${nd.active}" class="badge badge-approved" style="font-size:11px;">Hoạt động</span>
-                  <span th:unless="${nd.active}" class="badge badge-cancelled" style="font-size:11px;">Bị khóa</span>
-                </td>
-                <td>
-                  <button th:if="${nd.active}"
-                          th:onclick="'khoaTaiKhoan(' + ${nd.id} + ')'"
-                          class="btn btn-danger btn-sm">Khóa</button>
-                  <button th:unless="${nd.active}"
-                          th:onclick="'moKhoaTaiKhoan(' + ${nd.id} + ')'"
-                          class="btn btn-primary btn-sm">Mở khóa</button>
-                </td>
-              </tr>
+            <tr th:each="nd : ${danhSachNguoiDung}">
+              <td th:text="${nd.hoTen}">Tên</td>
+              <td th:text="${nd.vaiTro.name()}">Vai trò</td>
+              <td><span th:text="${nd.active ? 'Hoạt động' : 'Bị khóa'}" class="badge"></span></td>
+              <td>
+                <button th:if="${nd.active}" th:onclick="'khoaTaiKhoan(' + ${nd.id} + ')'" class="btn btn-danger btn-sm">Khóa</button>
+                <button th:unless="${nd.active}" th:onclick="'moKhoaTaiKhoan(' + ${nd.id} + ')'" class="btn btn-primary btn-sm">Mở</button>
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Danh sách tất cả sân -->
       <div class="card">
-        <div class="card-header">🏟️ Tất cả sân bóng</div>
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>🏟️ Tất cả sân bóng</span>
+          <button onclick="moFormSan()" class="btn btn-primary btn-sm">+ Thêm sân</button>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>Tên sân</th>
-                <th>Loại</th>
-                <th>Chủ sân</th>
-                <th>Trạng thái</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Tên sân</th><th>Loại</th><th>Thao tác</th></tr></thead>
             <tbody>
-              <tr th:each="san : ${danhSachSan}">
-                <td th:text="${san.tenSan}">Sân</td>
-                <td th:text="${san.loaiSan}">Sân 5</td>
-                <td style="font-size:13px;" th:text="${san.tenChuSan}">Chủ</td>
-                <td>
-                  <span th:switch="${san.trangThai.name()}">
-                    <span th:case="'HOAT_DONG'" class="badge badge-approved" style="font-size:11px;">Hoạt động</span>
-                    <span th:case="'DONG_CUA'"  class="badge badge-cancelled" style="font-size:11px;">Đóng cửa</span>
-                    <span th:case="'BAO_TRI'"   class="badge badge-pending" style="font-size:11px;">Bảo trì</span>
-                  </span>
-                </td>
-                <td>
-                  <button th:onclick="'xoaSan(' + ${san.id} + ')'"
-                          class="btn btn-danger btn-sm">Xóa</button>
-                </td>
-              </tr>
+            <tr th:each="san : ${danhSachSan}">
+              <td th:text="${san.tenSan}">Tên</td>
+              <td th:text="${san.loaiSan}">Loại</td>
+              <td>
+                <button th:onclick="moFormSan([[${san.id}]], [[${san.tenSan}]], [[${san.loaiSan.name()}]], [[${san.quanHuyen}]], [[${san.viTri}]], [[${san.moTa}]], [[${san.anhSan}]])" class="btn btn-outline btn-sm">Sửa</button>
+                <button th:onclick="'xoaSan(' + ${san.id} + ')'" class="btn btn-danger btn-sm">Xóa</button>
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
+
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-header">📅 Lịch đặt sân toàn hệ thống</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Khách</th>
+            <th>Sân</th>
+            <th>Ngày</th>
+            <th>Khung giờ</th> <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="p : ${danhSachPhieu}">
+            <td th:text="'#' + ${p.id}">#</td>
+            <td th:text="${p.tenNguoiDat}">Khách</td>
+            <td th:text="${p.danhSachChiTiet[0].tenSan}">Sân</td>
+            <td th:text="${p.danhSachChiTiet[0].ngaySuDung}">Ngày</td>
+
+            <td>
+            <span th:text="${p.danhSachChiTiet[0].gioBatDau} + ' - ' + ${p.danhSachChiTiet[0].gioKetThuc}">
+              00:00 - 00:00
+            </span>
+            </td>
+
+            <td th:text="${p.trangThai.name()}">Trạng thái</td>
+            <td>
+              <button th:onclick="'huyPhieuAdmin(' + ${p.id} + ')'" class="btn btn-danger btn-sm">Hủy</button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="formSanOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:999;" onclick="dongFormSan()"></div>
+  <div id="formSan" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--slate-800); padding:24px; border-radius:10px; z-index:1000; width:90%; max-width:450px; border: 1px solid var(--slate-600); max-height: 90vh; overflow-y: auto;">
+    <h3 id="formSanTitle" style="color:white;">Thêm sân mới</h3>
+    <input type="hidden" id="fs_id">
+    <div style="margin-bottom:10px;"><label>Tên sân</label><input type="text" id="fs_tenSan" class="form-control"></div>
+    <div style="margin-bottom:10px;"><label>Loại</label><select id="fs_loaiSan" class="form-control"><option value="SAN_5">Sân 5</option><option value="SAN_7">Sân 7</option><option value="SAN_11">Sân 11</option></select></div>
+    <div style="margin-bottom:10px;"><label>Quận Huyện</label><input type="text" id="fs_quanHuyen" class="form-control"></div>
+    <div style="margin-bottom:10px;"><label>Vị trí</label><input type="text" id="fs_viTri" class="form-control"></div>
+    <div style="margin-bottom:10px;"><label>Mô tả</label><textarea id="fs_moTa" class="form-control"></textarea></div>
+    <div style="margin-bottom:10px;"><label>Link ảnh</label><input type="text" id="fs_anhSan" class="form-control"></div>
+    <div style="margin-bottom:10px;" id="divChuSan"><label>ID Chủ Sân</label><input type="number" id="fs_chuSanId" class="form-control"></div>
+    <button onclick="luuSanBong()" class="btn btn-primary">Lưu</button>
   </div>
 </main>
 
-<footer th:replace="~{fragments/layout :: footer}"></footer>
-<div th:replace="~{fragments/layout :: toast}"></div>
-<script th:src="@{/js/main.js}"></script>
 <script>
-function khoaTaiKhoan(id) {
-  if (!confirm('Khóa tài khoản này?')) return;
-  fetch(`/api/admin/nguoi-dung/${id}/khoa`, { method: 'PATCH' })
+  function moFormSan(id = null, tenSan = '', loaiSan = 'SAN_5', quanHuyen = '', viTri = '', moTa = '', anhSan = '') {
+      document.getElementById('fs_id').value = id || '';
+      document.getElementById('fs_tenSan').value = tenSan;
+      document.getElementById('fs_loaiSan').value = loaiSan;
+      document.getElementById('fs_quanHuyen').value = quanHuyen;
+      document.getElementById('fs_viTri').value = viTri;
+      document.getElementById('fs_moTa').value = moTa;
+      document.getElementById('fs_anhSan').value = anhSan;
+      document.getElementById('divChuSan').style.display = id ? 'none' : 'block';
+      document.getElementById('formSan').style.display = 'block';
+      document.getElementById('formSanOverlay').style.display = 'block';
+  }
+
+  function dongFormSan() {
+      document.getElementById('formSan').style.display = 'none';
+      document.getElementById('formSanOverlay').style.display = 'none';
+  }
+
+  function luuSanBong() {
+      const data = {
+          id: document.getElementById('fs_id').value || null,
+          tenSan: document.getElementById('fs_tenSan').value,
+          loaiSan: document.getElementById('fs_loaiSan').value,
+          quanHuyen: document.getElementById('fs_quanHuyen').value,
+          viTri: document.getElementById('fs_viTri').value,
+          moTa: document.getElementById('fs_moTa').value,
+          anhSan: document.getElementById('fs_anhSan').value,
+          chuSanId: document.getElementById('fs_chuSanId').value || null
+      };
+      fetch('/api/san-bong/luu', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+      .then(r => r.json()).then(d => { if(d.success) location.reload(); else alert(d.message); });
+  }
+
+  function khoaTaiKhoan(id) { fetch(`/admin/api/nguoi-dung/${id}/khoa`, { method: 'PATCH' }).then(() => location.reload()); }
+  function moKhoaTaiKhoan(id) { fetch(`/admin/api/nguoi-dung/${id}/mo-khoa`, { method: 'PATCH' }).then(() => location.reload()); }
+  function xoaSan(id) { if(confirm('Xóa?')) fetch(`/admin/api/san-bong/${id}`, { method: 'DELETE' }).then(() => location.reload()); }
+  function huyPhieuAdmin(id) {
+    if (!confirm('Bạn có chắc chắn muốn hủy phiếu đặt sân này?')) return;
+
+    fetch(`/api/dat-san/${id}/trang-thai?trangThai=DA_HUY`, {
+        method: 'PATCH'
+    })
     .then(r => r.json())
-    .then(d => { if(d.success) { showToast('Đã khóa tài khoản'); setTimeout(()=>location.reload(),1000); } else showToast(d.message,'error'); });
-}
-function moKhoaTaiKhoan(id) {
-  fetch(`/api/admin/nguoi-dung/${id}/mo-khoa`, { method: 'PATCH' })
-    .then(r => r.json())
-    .then(d => { if(d.success) { showToast('Đã mở khóa'); setTimeout(()=>location.reload(),1000); } else showToast(d.message,'error'); });
-}
-function xoaSan(id) {
-  if (!confirm('Xóa sân này khỏi hệ thống?')) return;
-  fetch(`/api/admin/san-bong/${id}`, { method: 'DELETE' })
-    .then(r => r.json())
-    .then(d => { if(d.success) { showToast('Đã xóa sân'); setTimeout(()=>location.reload(),1000); } else showToast(d.message,'error'); });
-}
+    .then(d => {
+        if (d.success) {
+            alert('Đã hủy phiếu thành công!');
+            location.reload();
+        } else {
+            alert('Lỗi: ' + d.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Lỗi kết nối hoặc hệ thống!');
+    });
+  }
 </script>
 </body>
 </html>

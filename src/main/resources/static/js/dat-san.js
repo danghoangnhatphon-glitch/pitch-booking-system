@@ -1,26 +1,20 @@
-// ================================================================
-//  dat-san.js — Logic trang chi tiết sân (chọn giờ + đặt)
-// ================================================================
+
 
 let selectedSlots = [];
 
-// ── Khởi tạo khi trang load ──────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('summary-ngay').textContent = formatNgay(today);
 
-  // Event delegation — 1 listener trên grid, bắt click của tất cả slot
-  // Hoạt động cho cả slot Thymeleaf render lẫn slot JS render lại sau đổi ngày
   document.getElementById('slot-grid').addEventListener('click', (e) => {
     const slot = e.target.closest('.slot-item');
     if (!slot) return;
-    // Chỉ cho click nếu còn trống hoặc đang selected
     if (slot.classList.contains('booked')) return;
     chonGio(slot);
   });
 });
 
-// ── Tải lại lịch sân khi đổi ngày ───────────────────────────
 async function taiLichSan(ngay) {
   const grid    = document.getElementById('slot-grid');
   const loading = document.getElementById('slot-loading');
@@ -40,7 +34,6 @@ async function taiLichSan(ngay) {
       return;
     }
 
-    // Render lại grid — không cần gắn listener vì đã dùng delegation
     grid.innerHTML = '';
     data.data.forEach(kg => {
       const el = document.createElement('div');

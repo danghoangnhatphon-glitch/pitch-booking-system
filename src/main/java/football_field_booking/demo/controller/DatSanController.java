@@ -23,11 +23,6 @@ public class DatSanController {
 
     private final DatSanService datSanService;
 
-    // ================================================================
-    // POST /api/dat-san
-    // Khách hàng đặt sân
-    // Body: { sanId, ngaySuDung, danhSachKhungGioId, ghiChu }
-    // ================================================================
     @PostMapping
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<PhieuDatSanResponse>> datSan(
@@ -41,10 +36,6 @@ public class DatSanController {
                 .body(ApiResponse.ok("Đặt sân thành công! Vui lòng chờ xác nhận.", response));
     }
 
-    // ================================================================
-    // GET /api/dat-san/lich-su
-    // Khách hàng xem lịch sử đặt sân của mình
-    // ================================================================
     @GetMapping("/lich-su")
     @PreAuthorize("hasAnyRole('KHACH_HANG', 'CHU_SAN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<PhieuDatSanResponse>>> layLichSu(
@@ -55,10 +46,6 @@ public class DatSanController {
         );
     }
 
-    // ================================================================
-    // DELETE /api/dat-san/{id}/huy
-    // Khách hàng hủy phiếu đặt (chỉ được hủy khi đang CHO_DUYET)
-    // ================================================================
     @DeleteMapping("/{id}/huy")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<PhieuDatSanResponse>> huyPhieu(
@@ -71,10 +58,6 @@ public class DatSanController {
         ));
     }
 
-    // ================================================================
-    // GET /api/dat-san/cho-duyet
-    // Chủ sân xem danh sách phiếu đang chờ duyệt
-    // ================================================================
     @GetMapping("/cho-duyet")
     @PreAuthorize("hasRole('CHU_SAN')")
     public ResponseEntity<ApiResponse<List<PhieuDatSanResponse>>> layPhieuChoDuyet(
@@ -84,11 +67,24 @@ public class DatSanController {
             ApiResponse.ok(datSanService.layPhieuChoDuyet(nguoiDung.getId()))
         );
     }
+    @GetMapping("/tat-ca")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<PhieuDatSanResponse>>> layTatCaPhieu() {
+        return ResponseEntity.ok(ApiResponse.ok(datSanService.layTatCaPhieu()));
+    }
 
-    // ================================================================
-    // PATCH /api/dat-san/{id}/duyet
-    // Chủ sân duyệt phiếu
-    // ================================================================
+    @PatchMapping("/{id}/trang-thai")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PhieuDatSanResponse>> capNhatTrangThai(
+            @PathVariable Long id,
+            @RequestParam PhieuDatSan.TrangThai trangThai) {
+
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Cập nhật trạng thái thành công",
+                datSanService.adminCapNhatTrangThai(id, trangThai)
+        ));
+    }
+
     @PatchMapping("/{id}/duyet")
     @PreAuthorize("hasRole('CHU_SAN')")
     public ResponseEntity<ApiResponse<PhieuDatSanResponse>> duyetPhieu(
@@ -101,10 +97,6 @@ public class DatSanController {
         ));
     }
 
-    // ================================================================
-    // PATCH /api/dat-san/{id}/thanh-toan?phuongThuc=TIEN_MAT
-    // Chủ sân xác nhận đã nhận tiền
-    // ================================================================
     @PatchMapping("/{id}/thanh-toan")
     @PreAuthorize("hasRole('CHU_SAN')")
     public ResponseEntity<ApiResponse<PhieuDatSanResponse>> xacNhanThanhToan(

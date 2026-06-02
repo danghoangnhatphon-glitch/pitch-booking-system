@@ -9,7 +9,5 @@ import java.util.Optional;
 @Repository
 public interface GiaSanRepository extends JpaRepository<GiaSan, Long> {
 
-    // Lấy giá của 1 sân trong 1 khung giờ cụ thể
-    // Dùng khi tính tiền lúc đặt sân
     Optional<GiaSan> findBySanBongIdAndKhungGioId(Long sanId, Long khungGioId);
 }

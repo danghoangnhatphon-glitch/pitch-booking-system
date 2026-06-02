@@ -35,6 +35,7 @@ public class PhieuDatSanResponse {
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class ChiTietResponse {
+        private Long sanId;
         private String tenSan;
         private String loaiSan;
         private LocalDate ngaySuDung;
@@ -47,6 +48,7 @@ public class PhieuDatSanResponse {
         List<ChiTietResponse> chiTietList = entity.getDanhSachChiTiet()
                 .stream()
                 .map(ct -> ChiTietResponse.builder()
+                        .sanId(ct.getSanBong().getId())
                         .tenSan(ct.getSanBong().getTenSan())
                         .loaiSan(ct.getSanBong().getLoaiSan().name())
                         .ngaySuDung(ct.getNgaySuDung())

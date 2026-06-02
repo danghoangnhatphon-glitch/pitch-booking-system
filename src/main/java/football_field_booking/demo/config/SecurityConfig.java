@@ -15,7 +15,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -31,44 +30,37 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/chusan/**", "/admin/**"))
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/chusan/**", "/admin/**","/dat-san/**"))
 
             .authorizeHttpRequests(auth -> auth
-                // Static
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                // Public pages
                 .requestMatchers("/", "/san-bong", "/san-bong/**", "/auth/**").permitAll()
-                // Public API
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/san-bong/**").permitAll()
-                // Admin
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                // Chủ sân
                 .requestMatchers("/chusan/**").hasRole("CHU_SAN")
-                // Khách hàng
-                .requestMatchers("/dat-san/**").hasRole("KHACH_HANG")
+                .requestMatchers("/dat-san/**").hasAnyRole("KHACH_HANG", "CHU_SAN")
                 .anyRequest().authenticated()
             )
 
             .formLogin(form -> form
                 .loginPage("/auth/dang-nhap")
                 .loginProcessingUrl("/auth/login")
-                .usernameParameter("username")
+                .usernameParameter("email")
                 .passwordParameter("password")
-                // Dùng handler tùy chỉnh → redirect đúng trang theo role
                 .successHandler(loginSuccessHandler)
                 .failureUrl("/auth/dang-nhap?error")
                 .permitAll()
             )
 
-            .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
-                .logoutSuccessUrl("/auth/dang-nhap?logout")
-                .deleteCookies("JSESSIONID")
-                .invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .permitAll()
-            )
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .logoutSuccessUrl("/auth/dang-nhap?logout")
+                        .deleteCookies("JSESSIONID")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .permitAll()
+                )
 
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

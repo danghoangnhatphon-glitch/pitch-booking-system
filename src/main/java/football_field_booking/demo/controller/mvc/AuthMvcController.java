@@ -10,14 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-/**
- * Xử lý các trang auth qua Thymeleaf form (không phải REST API)
- *
- * Đăng NHẬP: Spring Security tự xử lý POST /auth/login
- *            → chỉ cần render trang GET
- * Đăng KÝ:  viết thủ công vì cần custom logic (kiểm tra mật khẩu khớp)
- */
 @Controller
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -25,19 +17,16 @@ public class AuthMvcController {
 
     private final NguoiDungService nguoiDungService;
 
-    // ── Trang đăng nhập ──────────────────────────────────────
     @GetMapping("/dang-nhap")
     public String trangDangNhap() {
         return "auth/dang-nhap";
     }
 
-    // ── Trang đăng ký ────────────────────────────────────────
     @GetMapping("/dang-ky")
     public String trangDangKy() {
         return "auth/dang-ky";
     }
 
-    // ── Xử lý form đăng ký ───────────────────────────────────
     @PostMapping("/dang-ky")
     public String xuLyDangKy(
             @RequestParam String hoTen,
@@ -48,7 +37,6 @@ public class AuthMvcController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        // Kiểm tra mật khẩu khớp
         if (!matKhau.equals(xacNhanMatKhau)) {
             model.addAttribute("errorMessage", "Mật khẩu xác nhận không khớp");
             // Giữ lại dữ liệu đã nhập để không phải nhập lại
@@ -68,8 +56,6 @@ public class AuthMvcController {
 
             nguoiDungService.dangKy(request);
 
-            // Đăng ký thành công → chuyển sang trang đăng nhập
-            // RedirectAttributes → flash message hiện 1 lần sau redirect
             redirectAttributes.addFlashAttribute("successMessage",
                 "Đăng ký thành công! Đăng nhập để tiếp tục.");
             return "redirect:/auth/dang-nhap";

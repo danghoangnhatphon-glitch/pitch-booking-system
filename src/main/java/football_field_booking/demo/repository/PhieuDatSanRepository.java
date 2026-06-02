@@ -11,19 +11,16 @@ import java.util.List;
 @Repository
 public interface PhieuDatSanRepository extends JpaRepository<PhieuDatSan, Long> {
 
-    // Lịch sử đặt sân của 1 người dùng, mới nhất lên trước
+
     List<PhieuDatSan> findByNguoiDatIdOrderByCreatedAtDesc(Long nguoiDatId);
 
-    // Lịch sử theo trạng thái (CHO_DUYET / DA_DUYET / DA_HUY)
+
     List<PhieuDatSan> findByNguoiDatIdAndTrangThai(
         Long nguoiDatId,
         PhieuDatSan.TrangThai trangThai
     );
+    List<PhieuDatSan> findAllByOrderByCreatedAtDesc();
 
-    // ================================================================
-    // Thống kê doanh thu theo tháng — dùng cho dashboard chủ sân
-    // Trả về: [nam, thang, soPhieu, doanhThu]
-    // ================================================================
     @Query("""
         SELECT
             YEAR(p.ngayTao)  AS nam,
@@ -35,16 +32,11 @@ public interface PhieuDatSanRepository extends JpaRepository<PhieuDatSan, Long> 
         JOIN SanBong s        ON s = ct.sanBong
         WHERE s.chuSan.id           = :chuSanId
           AND p.trangThai            = 'DA_DUYET'
-          AND p.trangThaiThanhToan   = 'DA_THANH_TOAN'
         GROUP BY YEAR(p.ngayTao), MONTH(p.ngayTao)
         ORDER BY YEAR(p.ngayTao) DESC, MONTH(p.ngayTao) DESC
         """)
     List<Object[]> thongKeDoanhThu(@Param("chuSanId") Long chuSanId);
 
-    // ================================================================
-    // Lấy tất cả phiếu CHỜ DUYỆT của các sân thuộc chủ sân X
-    // Dùng cho trang duyệt lịch đặt của chủ sân
-    // ================================================================
     @Query("""
         SELECT DISTINCT p FROM PhieuDatSan p
         JOIN p.danhSachChiTiet ct

@@ -25,18 +25,11 @@ public class DatSanService {
     private final GiaSanRepository         giaSanRepository;
     private final NguoiDungRepository      nguoiDungRepository;
 
-    // ================================================================
-    // ĐẶT SÂN — đây là method quan trọng nhất toàn bộ project
-    //
-    // @Transactional đảm bảo:
-    //   - Toàn bộ logic chạy trong 1 transaction
-    //   - Nếu bất kỳ bước nào lỗi → rollback hết, không ghi dở dang
-    //   - @Lock trong Repository chỉ hoạt động khi có @Transactional
-    // ================================================================
+
     @Transactional
     public PhieuDatSanResponse datSan(DatSanRequest request, Long nguoiDatId) {
 
-        // ── BƯỚC 1: Validate dữ liệu đầu vào ──────────────────────
+
         SanBong san = sanBongRepository.findById(request.getSanId())
                 .orElseThrow(() ->
                     new AppException.ResourceNotFoundException(
@@ -53,7 +46,6 @@ public class DatSanService {
                     new AppException.ResourceNotFoundException("Không tìm thấy người dùng")
                 );
 
-        // ── BƯỚC 2: Kiểm tra từng khung giờ + tính tiền ───────────
         List<ChiTietDatSan> danhSachChiTiet = new ArrayList<>();
         BigDecimal tongTien = BigDecimal.ZERO;
 
@@ -65,16 +57,11 @@ public class DatSanService {
                             "Không tìm thấy khung giờ #" + khungGioId)
                     );
 
-            // ── CHỐNG TRÙNG LỊCH: Pessimistic Lock ──────────────
-            // findWithLock() thực thi: SELECT ... WITH (UPDLOCK, ROWLOCK)
-            // → nếu có 2 request cùng lúc, cái thứ 2 PHẢI CHỜ ở đây
-            // → đến khi transaction 1 kết thúc mới được tiếp tục
             boolean daDat = chiTietDatSanRepository
                     .findWithLock(san.getId(), khungGioId, request.getNgaySuDung())
                     .isPresent();
 
             if (daDat) {
-                // Ném lỗi → @Transactional tự rollback toàn bộ
                 throw new AppException.SanDaDatException(
                     "Sân " + san.getTenSan() + " đã được đặt lúc "
                     + khungGio.getGioBatDau() + " - " + khungGio.getGioKetThuc()
@@ -82,7 +69,6 @@ public class DatSanService {
                 );
             }
 
-            // Lấy đơn giá tại thời điểm đặt
             GiaSan giaSan = giaSanRepository
                     .findBySanBongIdAndKhungGioId(san.getId(), khungGioId)
                     .orElseThrow(() ->
@@ -90,19 +76,18 @@ public class DatSanService {
                             "Sân này chưa có giá cho khung giờ đã chọn")
                     );
 
-            // Tạo chi tiết đặt sân (chưa save, gom vào list trước)
             ChiTietDatSan chiTiet = ChiTietDatSan.builder()
                     .sanBong(san)
                     .khungGio(khungGio)
                     .ngaySuDung(request.getNgaySuDung())
-                    .donGia(giaSan.getDonGia())   // lưu giá TẠI THỜI ĐIỂM ĐẶT
+                    .donGia(giaSan.getDonGia())
                     .build();
 
             danhSachChiTiet.add(chiTiet);
             tongTien = tongTien.add(giaSan.getDonGia());
         }
 
-        // ── BƯỚC 3: Tạo phiếu đặt sân (header) ───────────────────
+
         PhieuDatSan phieu = PhieuDatSan.builder()
                 .nguoiDat(nguoiDat)
                 .tongTien(tongTien)
@@ -111,24 +96,17 @@ public class DatSanService {
                 .ghiChu(request.getGhiChu())
                 .build();
 
-        // Gán phieu vào từng chi tiết (cần để JPA biết FK)
         danhSachChiTiet.forEach(ct -> ct.setPhieuDat(phieu));
         phieu.setDanhSachChiTiet(danhSachChiTiet);
 
-        // ── BƯỚC 4: Lưu vào DB ────────────────────────────────────
-        // CascadeType.ALL trên PhieuDatSan → save phieu sẽ tự save chi tiết
         PhieuDatSan saved = phieuDatSanRepository.save(phieu);
 
-        // ── BƯỚC 5: Trả về response ───────────────────────────────
+
         return PhieuDatSanResponse.from(saved);
 
-        // Khi method return → @Transactional COMMIT → lock được nhả
-        // → nếu có request B đang chờ, B sẽ được vào và thấy đã có người đặt
     }
 
-    // ================================================================
-    // Lấy lịch sử đặt sân của người dùng
-    // ================================================================
+
     @Transactional(readOnly = true)
     public List<PhieuDatSanResponse> layLichSu(Long nguoiDatId) {
         return phieuDatSanRepository
@@ -138,10 +116,6 @@ public class DatSanService {
                 .toList();
     }
 
-    // ================================================================
-    // Hủy phiếu đặt sân
-    // Chỉ hủy được khi đang CHO_DUYET và chưa thanh toán
-    // ================================================================
     @Transactional
     public PhieuDatSanResponse huyPhieu(Long phieuId, Long nguoiYeuCauId) {
 
@@ -151,12 +125,11 @@ public class DatSanService {
                         "Không tìm thấy phiếu #" + phieuId)
                 );
 
-        // Chỉ người đặt mới được hủy
+
         if (!phieu.getNguoiDat().getId().equals(nguoiYeuCauId)) {
             throw new AppException.ForbiddenException("Bạn không có quyền hủy phiếu này");
         }
 
-        // Chỉ hủy được khi đang chờ duyệt
         if (phieu.getTrangThai() != PhieuDatSan.TrangThai.CHO_DUYET) {
             throw new AppException.BadRequestException(
                 "Không thể hủy phiếu đã được duyệt hoặc đã hủy trước đó");
@@ -167,9 +140,6 @@ public class DatSanService {
         return PhieuDatSanResponse.from(saved);
     }
 
-    // ================================================================
-    // Chủ sân DUYỆT phiếu đặt
-    // ================================================================
     @Transactional
     public PhieuDatSanResponse duyetPhieu(Long phieuId, Long chuSanId) {
 
@@ -179,7 +149,6 @@ public class DatSanService {
                         "Không tìm thấy phiếu #" + phieuId)
                 );
 
-        // Kiểm tra phiếu này có thuộc sân của chủ sân này không
         boolean laSanCuaMinh = phieu.getDanhSachChiTiet().stream()
                 .anyMatch(ct -> ct.getSanBong().getChuSan().getId().equals(chuSanId));
 
@@ -195,10 +164,6 @@ public class DatSanService {
         PhieuDatSan saved = phieuDatSanRepository.save(phieu);
         return PhieuDatSanResponse.from(saved);
     }
-
-    // ================================================================
-    // Chủ sân lấy danh sách phiếu CHỜ DUYỆT
-    // ================================================================
     @Transactional(readOnly = true)
     public List<PhieuDatSanResponse> layPhieuChoDuyet(Long chuSanId) {
         return phieuDatSanRepository
@@ -208,9 +173,6 @@ public class DatSanService {
                 .toList();
     }
 
-    // ================================================================
-    // Xác nhận thanh toán (chủ sân đánh dấu đã nhận tiền)
-    // ================================================================
     @Transactional
     public PhieuDatSanResponse xacNhanThanhToan(Long phieuId,
                                                  PhieuDatSan.PhuongThucThanhToan phuongThuc,
@@ -230,6 +192,24 @@ public class DatSanService {
 
         phieu.setTrangThaiThanhToan(PhieuDatSan.TrangThaiThanhToan.DA_THANH_TOAN);
         phieu.setPhuongThucThanhToan(phuongThuc);
+        PhieuDatSan saved = phieuDatSanRepository.save(phieu);
+        return PhieuDatSanResponse.from(saved);
+    }
+    // 1. Lấy tất cả phiếu đặt trong hệ thống (dành cho Admin)
+    @Transactional(readOnly = true)
+    public List<PhieuDatSanResponse> layTatCaPhieu() {
+        return phieuDatSanRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(PhieuDatSanResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public PhieuDatSanResponse adminCapNhatTrangThai(Long phieuId, PhieuDatSan.TrangThai trangThai) {
+        PhieuDatSan phieu = phieuDatSanRepository.findById(phieuId)
+                .orElseThrow(() -> new AppException.ResourceNotFoundException("Không tìm thấy phiếu #" + phieuId));
+
+        phieu.setTrangThai(trangThai);
         PhieuDatSan saved = phieuDatSanRepository.save(phieu);
         return PhieuDatSanResponse.from(saved);
     }

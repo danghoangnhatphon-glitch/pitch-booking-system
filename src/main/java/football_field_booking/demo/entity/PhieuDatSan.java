@@ -43,16 +43,16 @@ public class PhieuDatSan {
     @Column(name = "phuong_thuc_thanh_toan", length = 30)
     private PhuongThucThanhToan phuongThucThanhToan;
 
-    // ── Đặt cọc ─────────────────────────────────────────────
+
     @Column(name = "tien_coc", precision = 12, scale = 0)
-    private BigDecimal tienCoc;           // 30% tổng tiền, tự tính khi tạo
+    private BigDecimal tienCoc;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai_coc", length = 20)
     private TrangThaiCoc trangThaiCoc = TrangThaiCoc.CHUA_COC;
 
     @Column(name = "thoi_gian_coc")
-    private LocalDateTime thoiGianCoc;   // thời điểm khách xác nhận đã chuyển
+    private LocalDateTime thoiGianCoc;
 
     @Column(name = "ghi_chu", length = 500)
     private String ghiChu;
@@ -64,7 +64,6 @@ public class PhieuDatSan {
     protected void onCreate() {
         this.ngayTao   = LocalDate.now();
         this.createdAt = LocalDateTime.now();
-        // Tự tính tiền cọc 30% khi tạo phiếu
         if (this.tongTien != null) {
             this.tienCoc = this.tongTien
                 .multiply(new java.math.BigDecimal("0.3"))
@@ -85,7 +84,6 @@ public class PhieuDatSan {
     @OneToOne(mappedBy = "phieuDat", fetch = FetchType.LAZY)
     private DanhGia danhGia;
 
-    // ── Enums ────────────────────────────────────────────────
     public enum TrangThai { CHO_DUYET, DA_DUYET, DA_HUY }
 
     public enum TrangThaiThanhToan { CHUA_THANH_TOAN, DA_THANH_TOAN, HOAN_TIEN }

@@ -11,25 +11,11 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.Optional;
 
-/**
- * Repository quan trọng nhất — chứa logic chống trùng lịch
- */
+
 @Repository
 public interface ChiTietDatSanRepository extends JpaRepository<ChiTietDatSan, Long> {
 
-    // ================================================================
-    // KIỂM TRA TRÙNG LỊCH với Pessimistic Lock
-    //
-    // @Lock(PESSIMISTIC_WRITE) → Hibernate sinh ra:
-    //   SELECT ... FROM chi_tiet_dat_san WITH (UPDLOCK, ROWLOCK) ...
-    //   (cú pháp riêng của SQL Server)
-    //
-    // Khi A đang chạy method này, B gọi cùng lúc sẽ BỊ BLOCK tại đây
-    // cho đến khi transaction của A kết thúc (commit hoặc rollback).
-    // Sau đó B mới được vào và sẽ thấy row đã tồn tại → từ chối đặt.
-    //
-    // ⚠️ Method này CHỈ hoạt động đúng khi được gọi trong @Transactional
-    // ================================================================
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT c FROM ChiTietDatSan c
@@ -43,7 +29,6 @@ public interface ChiTietDatSanRepository extends JpaRepository<ChiTietDatSan, Lo
         @Param("ngay")       LocalDate ngay
     );
 
-    // Kiểm tra không lock — dùng khi chỉ cần hiển thị trạng thái (không đặt)
     boolean existsBySanBongIdAndKhungGioIdAndNgaySuDung(
         Long sanId,
         Long khungGioId,

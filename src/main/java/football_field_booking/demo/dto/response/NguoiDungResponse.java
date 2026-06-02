@@ -5,18 +5,13 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * Thông tin người dùng trả về cho client
- *
- * ⚠️ KHÔNG bao gồm matKhau — không bao giờ trả password về client
- */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class NguoiDungResponse {
-    private boolean active;  // ← thêm dòng này
+    private boolean active;
     private Long id;
     private String hoTen;
     private String email;
@@ -25,13 +20,9 @@ public class NguoiDungResponse {
     private NguoiDung.VaiTro vaiTro;
     private LocalDateTime createdAt;
 
-    // ================================================================
-    // Static factory method — chuyển Entity → DTO trong 1 dòng
-    // Dùng: NguoiDungResponse.from(nguoiDung)
-    // ================================================================
     public static NguoiDungResponse from(NguoiDung entity) {
         return NguoiDungResponse.builder()
-                .active(entity.isActive()) // ← thêm dòng này
+                .active(entity.isActive())
                 .id(entity.getId())
                 .hoTen(entity.getHoTen())
                 .email(entity.getEmail())

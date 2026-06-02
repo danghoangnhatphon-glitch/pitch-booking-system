@@ -5,7 +5,6 @@
 
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-<!-- ── HERO ────────────────────────────────────────────── -->
 <section class="hero">
   <div class="container hero-content">
     <h1 class="hero-title">
@@ -22,7 +21,6 @@
   </div>
 </section>
 
-<!-- ── MAIN CONTENT ─────────────────────────────────────── -->
 <main class="main-content">
   <div class="container">
 
@@ -53,19 +51,16 @@
       <a th:href="@{/}" class="btn btn-outline">Xoá lọc</a>
     </form>
 
-    <!-- Tiêu đề -->
     <div class="page-header">
       <h1>Sân bóng đang hoạt động</h1>
       <p th:text="${danhSachSan.size()} + ' sân phù hợp'">0 sân</p>
     </div>
 
-    <!-- Danh sách sân -->
     <div class="san-grid" th:if="${not #lists.isEmpty(danhSachSan)}">
       <a th:each="san : ${danhSachSan}"
          th:href="@{/san-bong/{id}(id=${san.id})}"
          class="card san-card">
 
-        <!-- Ảnh sân -->
         <div class="san-card-img">
           <img th:if="${san.anhSan}" th:src="${san.anhSan}" alt="ảnh sân"/>
           <!-- Placeholder nếu không có ảnh -->
@@ -80,7 +75,6 @@
           </span>
         </div>
 
-        <!-- Thông tin -->
         <div class="san-card-body">
           <div class="san-card-title" th:text="${san.tenSan}">Tên sân</div>
 

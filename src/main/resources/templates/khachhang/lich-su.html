@@ -25,7 +25,6 @@
       <div th:each="phieu : ${danhSachPhieu}" class="card">
         <div class="card-body">
 
-          <!-- Header -->
           <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
             <div>
               <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--white);">
@@ -37,14 +36,12 @@
             </div>
 
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-              <!-- Trạng thái phiếu -->
               <span th:switch="${phieu.trangThai.name()}">
                 <span th:case="'CHO_DUYET'" class="badge badge-pending">⏳ Chờ duyệt</span>
                 <span th:case="'DA_DUYET'"  class="badge badge-approved">✅ Đã duyệt</span>
                 <span th:case="'DA_HUY'"    class="badge badge-cancelled">❌ Đã hủy</span>
               </span>
 
-              <!-- Trạng thái cọc — chỉ hiện khi đã duyệt -->
               <span th:if="${phieu.trangThai.name() == 'DA_DUYET'}"
                     th:switch="${phieu.trangThaiCoc != null ? phieu.trangThaiCoc.name() : 'CHUA_COC'}">
                 <span th:case="'CHUA_COC'" class="badge badge-unpaid">💳 Chưa cọc</span>
@@ -53,7 +50,6 @@
             </div>
           </div>
 
-          <!-- Chi tiết ca đặt -->
           <div style="background:var(--slate-700);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:16px;">
             <div th:each="ct, stat : ${phieu.danhSachChiTiet}"
                  style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;"
@@ -70,13 +66,11 @@
             </div>
           </div>
 
-          <!-- Footer -->
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
             <div>
               <div style="font-size:13px;color:var(--slate-400);">Tổng tiền</div>
               <div style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--white);"
                    th:text="${#numbers.formatInteger(phieu.tongTien,3,'COMMA')} + 'đ'">0đ</div>
-              <!-- Hiện tiền cọc nếu đã duyệt -->
               <div th:if="${phieu.trangThai.name() == 'DA_DUYET'}"
                    style="font-size:13px;color:var(--green-300);margin-top:2px;">
                 Cọc 30%:
@@ -85,20 +79,20 @@
             </div>
 
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <!-- Nút thanh toán cọc — chỉ hiện khi DA_DUYET và CHUA_COC -->
-              <a th:if="${phieu.trangThai.name() == 'DA_DUYET'
-                          and (phieu.trangThaiCoc == null
-                               or phieu.trangThaiCoc.name() == 'CHUA_COC')}"
+              <a th:if="${phieu.trangThai.name() == 'DA_DUYET' and (phieu.trangThaiCoc == null or phieu.trangThaiCoc.name() == 'CHUA_COC')}"
                  th:href="@{/dat-san/{id}/thanh-toan-coc(id=${phieu.id})}"
                  class="btn btn-amber">
                 💳 Thanh toán cọc
               </a>
 
-              <!-- Nút hủy — chỉ hiện khi CHO_DUYET -->
               <button th:if="${phieu.trangThai.name() == 'CHO_DUYET'}"
                       th:onclick="'huyPhieu(' + ${phieu.id} + ')'"
                       class="btn btn-danger btn-sm">
                 Hủy phiếu
+              </button>
+
+              <button th:if="${phieu.trangThai.name() == 'DA_DUYET' and phieu.trangThaiCoc != null and phieu.trangThaiCoc.name() == 'DA_COC'}" th:onclick="moFormDanhGia([[${phieu.id}]], [[${phieu.danhSachChiTiet[0].sanId}]])" class="btn btn-outline" style="border-color: #fbbf24; color: #fbbf24;">
+                ⭐ Viết đánh giá
               </button>
             </div>
           </div>
@@ -108,21 +102,104 @@
 
     </div>
   </div>
+
+  <div id="formDanhGiaOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:999;" onclick="dongFormDanhGia()"></div>
+  <div id="formDanhGia" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--slate-800); padding:24px; border-radius:var(--radius-md); z-index:1000; width:90%; max-width:400px; border: 1px solid var(--slate-600); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <h3 style="color:var(--white); margin-bottom:16px;">⭐ Đánh giá sân bóng</h3>
+
+    <input type="hidden" id="dg_phieuId">
+    <input type="hidden" id="dg_sanId">
+
+    <div style="margin-bottom:16px;">
+      <label style="color:var(--slate-300); display:block; margin-bottom:8px; font-size:14px;">Chất lượng sân (Số sao)</label>
+      <select id="dg_soSao" style="width: 100%; padding: 10px; background: var(--slate-900); color: white; border: 1px solid var(--slate-600); border-radius: var(--radius-sm); outline: none;">
+        <option value="5">⭐⭐⭐⭐⭐ (Tuyệt vời)</option>
+        <option value="4">⭐⭐⭐⭐ (Tốt)</option>
+        <option value="3">⭐⭐⭐ (Tạm được)</option>
+        <option value="2">⭐⭐ (Kém)</option>
+        <option value="1">⭐ (Rất tệ)</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label style="color:var(--slate-300); display:block; margin-bottom:8px; font-size:14px;">Nhận xét của bạn</label>
+      <textarea id="dg_noiDung" rows="3" placeholder="Sân đá êm không, đèn sáng không?..." style="width: 100%; padding: 10px; background: var(--slate-900); color: white; border: 1px solid var(--slate-600); border-radius: var(--radius-sm); outline: none;"></textarea>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:12px;">
+      <button onclick="dongFormDanhGia()" class="btn btn-outline" style="background: transparent; color: white;">Hủy</button>
+      <button onclick="guiDanhGia()" class="btn btn-primary">Gửi Đánh Giá</button>
+    </div>
+  </div>
+
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <div th:replace="~{fragments/layout :: toast}"></div>
+
 <script th:src="@{/js/main.js}"></script>
 <script>
-function huyPhieu(phieuId) {
-  if (!confirm('Bạn chắc chắn muốn hủy phiếu này?')) return;
-  fetch(`/api/dat-san/${phieuId}/huy`, { method: 'DELETE' })
-    .then(r => r.json())
-    .then(d => {
-      if (d.success) { showToast('Hủy phiếu thành công!'); setTimeout(() => location.reload(), 1000); }
-      else showToast(d.message, 'error');
-    });
-}
+  // Xử lý Hủy Phiếu
+  function huyPhieu(phieuId) {
+    if (!confirm('Bạn chắc chắn muốn hủy phiếu này?')) return;
+    fetch(`/api/dat-san/${phieuId}/huy`, { method: 'DELETE' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          showToast('Hủy phiếu thành công!');
+          setTimeout(() => location.reload(), 1000);
+        }
+        else showToast(d.message, 'error');
+      });
+  }
+
+  // Xử lý Form Đánh Giá
+  function moFormDanhGia(phieuId, sanId) {
+      document.getElementById('dg_phieuId').value = phieuId;
+      document.getElementById('dg_sanId').value = sanId;
+      document.getElementById('formDanhGia').style.display = 'block';
+      document.getElementById('formDanhGiaOverlay').style.display = 'block';
+  }
+
+  function dongFormDanhGia() {
+      document.getElementById('formDanhGia').style.display = 'none';
+      document.getElementById('formDanhGiaOverlay').style.display = 'none';
+      document.getElementById('dg_noiDung').value = '';
+  }
+
+  function guiDanhGia() {
+      const data = {
+          phieuDatId: parseInt(document.getElementById('dg_phieuId').value),
+          sanId: parseInt(document.getElementById('dg_sanId').value),
+          soSao: parseInt(document.getElementById('dg_soSao').value),
+          noiDung: document.getElementById('dg_noiDung').value
+      };
+
+      if(data.noiDung.trim() === '') {
+          showToast('Vui lòng nhập nhận xét của bạn!', 'error');
+          return;
+      }
+
+      fetch('/api/danh-gia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+      })
+      .then(r => r.json())
+      .then(d => {
+          if (d.success) {
+              showToast('Cảm ơn bạn đã đánh giá!');
+              dongFormDanhGia();
+              setTimeout(() => location.reload(), 1500);
+          } else {
+              showToast(d.message, 'error');
+          }
+      })
+      .catch(err => {
+          console.error(err);
+          showToast('Lỗi kết nối, vui lòng thử lại', 'error');
+      });
+  }
 </script>
 </body>
 </html>

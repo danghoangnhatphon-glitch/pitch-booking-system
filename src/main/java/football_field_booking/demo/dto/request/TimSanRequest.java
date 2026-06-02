@@ -5,10 +5,6 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-/**
- * Bộ lọc tìm kiếm sân
- * Tất cả field đều optional — không chọn thì bỏ qua
- */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,8 +12,8 @@ import java.time.LocalDate;
 @Builder
 public class TimSanRequest {
 
-    private String quanHuyen;           // Lọc theo khu vực
-    private SanBong.LoaiSan loaiSan;    // Lọc theo loại sân (5, 7, 11)
-    private LocalDate ngay;             // Lọc theo ngày còn trống
-    private Long khungGioId;            // Lọc theo khung giờ còn trống
+    private String quanHuyen;
+    private SanBong.LoaiSan loaiSan;
+    private LocalDate ngay;
+    private Long khungGioId;
 }

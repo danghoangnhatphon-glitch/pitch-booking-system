@@ -19,7 +19,6 @@ public class DatSanRequest {
 
     @NotNull(message = "Vui lòng chọn ngày")
     @FutureOrPresent(message = "Không thể đặt sân ngày đã qua")
-    // Báo cho Jackson biết format ngày từ JSON: "2025-06-01"
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate ngaySuDung;
 

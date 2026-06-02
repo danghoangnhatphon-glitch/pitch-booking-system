@@ -12,20 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Bắt tất cả exception trong toàn bộ project
- * và chuyển thành ApiResponse chuẩn để trả về client.
- *
- * @RestControllerAdvice = @ControllerAdvice + @ResponseBody
- * → áp dụng cho tất cả @RestController
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ================================================================
-    // Lỗi validation — @Valid trong Controller thất bại
-    // VD: email sai định dạng, mật khẩu quá ngắn...
-    // ================================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidation(
             MethodArgumentNotValidException ex) {
@@ -43,9 +32,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Dữ liệu không hợp lệ"));
     }
 
-    // ================================================================
-    // 404 — Không tìm thấy
-    // ================================================================
     @ExceptionHandler(AppException.ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(
             AppException.ResourceNotFoundException ex) {
@@ -54,9 +40,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
-    // ================================================================
-    // 409 — Trùng lịch đặt sân
-    // ================================================================
     @ExceptionHandler(AppException.SanDaDatException.class)
     public ResponseEntity<ApiResponse<Void>> handleSanDaDat(
             AppException.SanDaDatException ex) {
@@ -65,10 +48,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
-    // ================================================================
-    // 409 — Lưới an toàn cuối: DB ném DataIntegrityViolationException
-    // xảy ra khi UNIQUE constraint bị vi phạm (2 request cùng lúc)
-    // ================================================================
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateKey(
             DataIntegrityViolationException ex) {
@@ -77,9 +56,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Sân này đã được đặt. Vui lòng chọn khung giờ khác."));
     }
 
-    // ================================================================
-    // 400 — Request không hợp lệ
-    // ================================================================
     @ExceptionHandler(AppException.BadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(
             AppException.BadRequestException ex) {
@@ -88,9 +64,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
-    // ================================================================
-    // 409 — Email đã tồn tại
-    // ================================================================
     @ExceptionHandler(AppException.EmailDaTonTaiException.class)
     public ResponseEntity<ApiResponse<Void>> handleEmailTrung(
             AppException.EmailDaTonTaiException ex) {
@@ -99,9 +72,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
-    // ================================================================
-    // 403 — Không có quyền
-    // ================================================================
     @ExceptionHandler(AppException.ForbiddenException.class)
     public ResponseEntity<ApiResponse<Void>> handleForbidden(
             AppException.ForbiddenException ex) {
@@ -110,12 +80,8 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
-    // ================================================================
-    // 500 — Lỗi không xác định (bắt cuối cùng)
-    // ================================================================
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
-        // Log lỗi ra console để debug (sau này thay bằng Logger)
         ex.printStackTrace();
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -1,5 +1,6 @@
 package football_field_booking.demo.service;
 
+import football_field_booking.demo.dto.request.SanBongRequest;
 import football_field_booking.demo.dto.request.TimSanRequest;
 import football_field_booking.demo.dto.response.KhungGioTrangThaiResponse;
 import football_field_booking.demo.dto.response.SanBongResponse;
@@ -7,6 +8,7 @@ import football_field_booking.demo.entity.SanBong;
 import football_field_booking.demo.exception.AppException;
 import football_field_booking.demo.repository.DanhGiaRepository;
 import football_field_booking.demo.repository.KhungGioRepository;
+import football_field_booking.demo.repository.NguoiDungRepository;
 import football_field_booking.demo.repository.SanBongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,10 +26,34 @@ public class SanBongService {
     private final SanBongRepository    sanBongRepository;
     private final KhungGioRepository   khungGioRepository;
     private final DanhGiaRepository    danhGiaRepository;
+    private final NguoiDungRepository nguoiDungRepository;
+    @Transactional
+    public SanBongResponse luuSanBong(SanBongRequest request) {
+        SanBong san;
 
-    // ================================================================
-    // Lấy tất cả sân đang hoạt động
-    // ================================================================
+        if (request.getId() != null) {
+            // Trường hợp Sửa: Tìm sân có sẵn
+            san = sanBongRepository.findById(request.getId())
+                    .orElseThrow(() -> new AppException.ResourceNotFoundException("Không tìm thấy sân"));
+        } else {
+            san = new SanBong();
+            san.setTrangThai(SanBong.TrangThai.HOAT_DONG);
+
+            football_field_booking.demo.entity.NguoiDung chuSan = nguoiDungRepository.findById(request.getChuSanId())
+                    .orElseThrow(() -> new AppException.ResourceNotFoundException("Không tìm thấy chủ sân"));
+            san.setChuSan(chuSan);
+        }
+
+        san.setTenSan(request.getTenSan());
+        san.setLoaiSan(SanBong.LoaiSan.valueOf(request.getLoaiSan()));
+        san.setQuanHuyen(request.getQuanHuyen());
+        san.setViTri(request.getViTri());
+        san.setMoTa(request.getMoTa());
+        san.setAnhSan(request.getAnhSan());
+
+        return SanBongResponse.from(sanBongRepository.save(san), null);
+    }
+
     @Transactional(readOnly = true)
     public List<SanBongResponse> layTatCaSan() {
         return sanBongRepository
@@ -40,9 +66,6 @@ public class SanBongService {
                 .toList();
     }
 
-    // ================================================================
-    // Lấy chi tiết 1 sân
-    // ================================================================
     @Transactional(readOnly = true)
     public SanBongResponse layChiTiet(Long sanId) {
         SanBong san = sanBongRepository.findById(sanId)
@@ -53,14 +76,27 @@ public class SanBongService {
         return SanBongResponse.from(san, diem);
     }
 
-    // ================================================================
-    // Tìm sân theo bộ lọc (khu vực + loại sân)
-    // ================================================================
+
     @Transactional(readOnly = true)
     public List<SanBongResponse> timSan(TimSanRequest request) {
-        return sanBongRepository
-                .timSanTheoBoLoc(request.getQuanHuyen(), request.getLoaiSan())
-                .stream()
+        String qh = request.getQuanHuyen();
+        SanBong.LoaiSan ls = request.getLoaiSan();
+        SanBong.TrangThai tt = SanBong.TrangThai.HOAT_DONG;
+
+        List<SanBong> dsSan;
+
+
+        if (qh == null && ls == null) {
+            dsSan = sanBongRepository.findByTrangThai(tt);
+        } else if (qh != null && ls == null) {
+            dsSan = sanBongRepository.findByQuanHuyenAndTrangThai(qh, tt);
+        } else if (qh == null && ls != null) {
+            dsSan = sanBongRepository.findByLoaiSanAndTrangThai(ls, tt);
+        } else {
+            dsSan = sanBongRepository.timSanTheoBoLoc(qh, ls);
+        }
+
+        return dsSan.stream()
                 .map(san -> {
                     Double diem = danhGiaRepository.tinhDiemTrungBinh(san.getId());
                     return SanBongResponse.from(san, diem);
@@ -68,26 +104,20 @@ public class SanBongService {
                 .toList();
     }
 
-    // ================================================================
-    // Lấy lịch sân theo ngày — dùng cho UI chọn giờ
-    // Trả về danh sách khung giờ + trạng thái còn trống hay đã đặt
-    // ================================================================
     @Transactional(readOnly = true)
     public List<KhungGioTrangThaiResponse> layLichSan(Long sanId, LocalDate ngay) {
 
-        // Kiểm tra sân tồn tại
+
         sanBongRepository.findById(sanId)
                 .orElseThrow(() ->
                     new AppException.ResourceNotFoundException("Không tìm thấy sân #" + sanId)
                 );
 
-        // Không cho xem lịch ngày trong quá khứ
+
         if (ngay.isBefore(LocalDate.now())) {
             throw new AppException.BadRequestException("Không thể xem lịch ngày đã qua");
         }
 
-        // Query trả về Object[]: [khungGioId, gioBatDau, gioKetThuc,
-        //                          laGioCaoDiem, donGia, conTrong]
         List<Object[]> rows = khungGioRepository.layLichSanTheoNgay(sanId, ngay);
 
         return rows.stream()
@@ -102,9 +132,7 @@ public class SanBongService {
                 .toList();
     }
 
-    // ================================================================
-    // Lấy danh sách sân của 1 chủ sân (dùng cho trang quản lý)
-    // ================================================================
+
     @Transactional(readOnly = true)
     public List<SanBongResponse> laySanCuaChuSan(Long chuSanId) {
         return sanBongRepository.findByChuSanId(chuSanId)
@@ -113,9 +141,6 @@ public class SanBongService {
                 .toList();
     }
 
-    // ================================================================
-    // Chủ sân đổi trạng thái sân (mở/đóng/bảo trì)
-    // ================================================================
     @Transactional
     public SanBongResponse doiTrangThai(Long sanId, SanBong.TrangThai trangThai,
                                         Long nguoiYeuCauId) {
@@ -124,7 +149,7 @@ public class SanBongService {
                     new AppException.ResourceNotFoundException("Không tìm thấy sân #" + sanId)
                 );
 
-        // Chỉ chủ sân của sân đó mới được đổi trạng thái
+
         if (!san.getChuSan().getId().equals(nguoiYeuCauId)) {
             throw new AppException.ForbiddenException("Bạn không có quyền chỉnh sửa sân này");
         }

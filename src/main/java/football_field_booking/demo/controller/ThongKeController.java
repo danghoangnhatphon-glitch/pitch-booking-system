@@ -21,10 +21,6 @@ public class ThongKeController {
 
     private final ThongKeService thongKeService;
 
-    // ================================================================
-    // GET /api/thong-ke/doanh-thu
-    // Doanh thu theo tháng — chỉ CHU_SAN và ADMIN
-    // ================================================================
     @GetMapping("/doanh-thu")
     @PreAuthorize("hasAnyRole('CHU_SAN', 'ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, BigDecimal>>> doanhThu(
@@ -34,11 +30,6 @@ public class ThongKeController {
             ApiResponse.ok(thongKeService.thongKeDoanhThu(nguoiDung.getId()))
         );
     }
-
-    // ================================================================
-    // GET /api/thong-ke/tong-quan
-    // Số liệu tổng hợp hiển thị đầu dashboard
-    // ================================================================
     @GetMapping("/tong-quan")
     @PreAuthorize("hasAnyRole('CHU_SAN', 'ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> tongQuan(

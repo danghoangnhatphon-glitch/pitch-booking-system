@@ -20,7 +20,6 @@ public class CocService {
     private final PhieuDatSanRepository phieuDatSanRepository;
     private final NguoiDungRepository   nguoiDungRepository;
 
-    // ── Khách xác nhận đã chuyển khoản cọc ──────────────────
     @Transactional
     public PhieuDatSanResponse xacNhanDaChuyenKhoan(Long phieuId, Long nguoiDungId) {
 
@@ -28,18 +27,15 @@ public class CocService {
                 .orElseThrow(() -> new AppException.ResourceNotFoundException(
                     "Không tìm thấy phiếu #" + phieuId));
 
-        // Chỉ người đặt mới được xác nhận
         if (!phieu.getNguoiDat().getId().equals(nguoiDungId)) {
             throw new AppException.ForbiddenException("Không có quyền thực hiện");
         }
 
-        // Chỉ xác nhận khi phiếu đã được duyệt
         if (phieu.getTrangThai() != PhieuDatSan.TrangThai.DA_DUYET) {
             throw new AppException.BadRequestException(
                 "Phiếu chưa được chủ sân duyệt");
         }
 
-        // Chỉ xác nhận khi chưa cọc
         if (phieu.getTrangThaiCoc() == PhieuDatSan.TrangThaiCoc.DA_COC) {
             throw new AppException.BadRequestException("Phiếu đã được đặt cọc rồi");
         }
@@ -51,7 +47,6 @@ public class CocService {
         return PhieuDatSanResponse.from(saved);
     }
 
-    // ── Lấy thông tin ngân hàng của chủ sân để hiển thị QR ──
     @Transactional(readOnly = true)
     public Map<String, String> layThongTinNganHang(Long phieuId) {
 
@@ -59,7 +54,6 @@ public class CocService {
                 .orElseThrow(() -> new AppException.ResourceNotFoundException(
                     "Không tìm thấy phiếu #" + phieuId));
 
-        // Lấy chủ sân từ chi tiết đặt sân
         NguoiDung chuSan = phieu.getDanhSachChiTiet()
                 .get(0).getSanBong().getChuSan();
 
@@ -72,12 +66,9 @@ public class CocService {
             "tenNganHang", chuSan.getTenNganHang() != null ? chuSan.getTenNganHang() : "",
             "soTaiKhoan",  chuSan.getSoTaiKhoan(),
             "tenChuTk",    chuSan.getTenChuTk() != null ? chuSan.getTenChuTk() : "",
-            // Mã ngân hàng cho VietQR API — mặc định VCB nếu chưa map
             "maNganHang",  layMaNganHang(chuSan.getTenNganHang())
         );
     }
-
-    // ── Chủ sân cập nhật thông tin ngân hàng ─────────────────
     @Transactional
     public void capNhatNganHang(Long chuSanId, String tenNganHang,
                                  String soTaiKhoan, String tenChuTk) {
@@ -91,10 +82,9 @@ public class CocService {
         nguoiDungRepository.save(chuSan);
     }
 
-    // ── Map tên ngân hàng → mã VietQR ────────────────────────
-    // Xem thêm tại: https://api.vietqr.io/v2/banks
+
     private String layMaNganHang(String tenNganHang) {
-        if (tenNganHang == null) return "970436"; // mặc định VCB
+        if (tenNganHang == null) return "970436";
         return switch (tenNganHang.toLowerCase()) {
             case "vietcombank", "vcb"       -> "970436";
             case "techcombank", "tcb"       -> "970407";

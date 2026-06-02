@@ -6,8 +6,6 @@
 
 <main class="main-content">
   <div class="container">
-
-    <!-- Tab navigation -->
     <div style="display:flex;gap:8px;margin-bottom:28px;border-bottom:1px solid var(--slate-700);padding-bottom:0;">
       <button onclick="doiTab('tab-tong-quan')" id="btn-tong-quan"
               class="tab-btn active-tab">📊 Tổng quan</button>
@@ -22,8 +20,6 @@
       <button onclick="doiTab('tab-nganhang')" id="btn-nganhang"
               class="tab-btn">🏦 Ngân hàng</button>
     </div>
-
-    <!-- ── TAB 1: TỔNG QUAN ─────────────────────────────── -->
     <div id="tab-tong-quan">
       <div class="stats-grid">
         <div class="stat-card">
@@ -44,8 +40,6 @@
           <div class="stat-value" th:text="${danhSachSan.size()}">0</div>
         </div>
       </div>
-
-      <!-- Doanh thu theo tháng -->
       <div class="card">
         <div class="card-header">📊 Doanh thu theo tháng</div>
         <div style="padding:16px;">
@@ -66,8 +60,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ── TAB 2: PHIẾU ĐẶT SÂN ────────────────────────── -->
     <div id="tab-phieu" style="display:none;">
 
       <div class="page-header">
@@ -116,8 +108,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ── TAB 3: QUẢN LÝ SÂN ───────────────────────────── -->
     <div id="tab-san" style="display:none;">
 
       <div class="page-header">
@@ -152,8 +142,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ── TAB 4: NGÂN HÀNG ─────────────────────────────── -->
     <div id="tab-nganhang" style="display:none;">
 
       <div class="page-header">

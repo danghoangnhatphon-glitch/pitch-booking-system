@@ -5,14 +5,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * Map với bảng danh_gia
- * Cho phép khách hàng đánh giá sân sau khi đã sử dụng
- */
 @Entity
 @Table(name = "danh_gia",
        uniqueConstraints = {
-           // Mỗi phiếu chỉ được đánh giá 1 lần
            @UniqueConstraint(name = "uq_danhgia_phieu", columnNames = {"phieu_dat_id"})
        })
 @Getter
@@ -26,7 +21,7 @@ public class DanhGia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 1-5 sao
+
     @Column(name = "so_sao", nullable = false)
     private Byte soSao;
 
@@ -41,24 +36,12 @@ public class DanhGia {
         this.createdAt = LocalDateTime.now();
     }
 
-    // ================================================================
-    // Quan hệ: 1 đánh giá thuộc về 1 phiếu (OneToOne)
-    // ================================================================
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "phieu_dat_id", nullable = false)
     private PhieuDatSan phieuDat;
-
-    // ================================================================
-    // Quan hệ: nhiều đánh giá của 1 người dùng
-    // ================================================================
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "nguoi_danh_gia", nullable = false)
     private NguoiDung nguoiDanhGia;
-
-    // ================================================================
-    // Quan hệ: đánh giá thuộc về 1 sân
-    // (để tính điểm trung bình sân dễ hơn)
-    // ================================================================
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "san_id", nullable = false)
     private SanBong sanBong;

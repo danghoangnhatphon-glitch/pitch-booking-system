@@ -41,7 +41,15 @@
       <li sec:authorize="isAuthenticated()" class="navbar-user">
         <div class="avatar" sec:authentication="name" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</div>
         <span sec:authentication="principal.hoTen" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-        <a th:href="@{/auth/logout}" style="color:var(--slate-400);font-size:13px;margin-left:4px;">[Thoát]</a>
+        <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit"
+                  style="background:none;border:none;color:var(--slate-400);
+                         font-size:13px;cursor:pointer;padding:0;
+                         font-family:var(--font-body);margin-left:4px;">
+            [Thoát]
+          </button>
+        </form>
       </li>
     </ul>
 
@@ -55,7 +63,7 @@
       <div class="navbar-brand" style="margin-bottom:6px;">⚽ SÂN BÓNG<span class="dot">.</span>VN</div>
       <p style="font-size:13px;color:var(--slate-400);">Đặt sân bóng đá nhanh chóng, tiện lợi</p>
     </div>
-    <p style="font-size:13px;color:var(--slate-400);">© 2025 SânBóng.vn — Đồ án môn học</p>
+    <p style="font-size:13px;color:var(--slate-400);">© 2026 SânBóng.vn — Đồ án môn học</p>
   </div>
 </footer>
 

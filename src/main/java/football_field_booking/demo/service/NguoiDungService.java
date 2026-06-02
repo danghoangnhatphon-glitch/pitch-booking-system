@@ -13,23 +13,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Service quản lý tài khoản người dùng
- *
- * Implement UserDetailsService → Spring Security dùng để load user khi login
- * (Spring gọi loadUserByUsername() với email người dùng nhập vào)
- */
 @Service
-@RequiredArgsConstructor  // Lombok tự tạo constructor inject tất cả final field
+@RequiredArgsConstructor
 public class NguoiDungService implements UserDetailsService {
 
     private final NguoiDungRepository nguoiDungRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    // ================================================================
-    // Spring Security gọi method này khi người dùng đăng nhập
-    // "username" ở đây thực ra là email
-    // ================================================================
+
     @Override
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
@@ -52,38 +43,27 @@ public class NguoiDungService implements UserDetailsService {
                 new BCryptPasswordEncoder().encode("123456"));
         return user;
     }
-    // ================================================================
-    // Đăng ký tài khoản mới
-    // ================================================================
     @Transactional
     public NguoiDungResponse dangKy(DangKyRequest request) {
 
-        // 1. Kiểm tra email đã tồn tại chưa
         if (nguoiDungRepository.existsByEmail(request.getEmail())) {
             throw new AppException.EmailDaTonTaiException(request.getEmail());
         }
 
-        // 2. Tạo entity mới — dùng Builder pattern của Lombok
         NguoiDung nguoiDung = NguoiDung.builder()
                 .hoTen(request.getHoTen())
-                .email(request.getEmail().toLowerCase().trim())  // chuẩn hoá email
-                .matKhau(passwordEncoder.encode(request.getMatKhau()))  // hash mật khẩu
+                .email(request.getEmail().toLowerCase().trim())
+                .matKhau(passwordEncoder.encode(request.getMatKhau()))
                 .soDienThoai(request.getSoDienThoai())
-                .vaiTro(NguoiDung.VaiTro.KHACH_HANG)  // mặc định là khách hàng
+                .vaiTro(NguoiDung.VaiTro.KHACH_HANG)
                 .isActive(true)
                 .build();
-
-        // 3. Lưu vào DB
         NguoiDung saved = nguoiDungRepository.save(nguoiDung);
 
-        // 4. Trả về DTO (không trả Entity trực tiếp)
         return NguoiDungResponse.from(saved);
     }
 
-    // ================================================================
-    // Lấy thông tin người dùng theo ID
-    // ================================================================
-    @Transactional(readOnly = true)  // readOnly = true → tối ưu hiệu năng đọc
+    @Transactional(readOnly = true)
     public NguoiDungResponse layThongTin(Long id) {
         NguoiDung nguoiDung = nguoiDungRepository.findById(id)
                 .orElseThrow(() ->

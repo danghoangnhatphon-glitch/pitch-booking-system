@@ -25,7 +25,6 @@ public class AdminService {
     private final PhieuDatSanRepository phieuDatSanRepository;
     private final DanhGiaRepository    danhGiaRepository;
 
-    // ── Lấy tất cả người dùng ────────────────────────────────
     @Transactional(readOnly = true)
     public List<NguoiDungResponse> layTatCaNguoiDung() {
         return nguoiDungRepository.findAll()
@@ -34,7 +33,6 @@ public class AdminService {
                 .toList();
     }
 
-    // ── Khóa / mở khóa tài khoản ─────────────────────────────
     @Transactional
     public void khoaTaiKhoan(Long id) {
         NguoiDung nd = nguoiDungRepository.findById(id)
@@ -54,7 +52,6 @@ public class AdminService {
         nguoiDungRepository.save(nd);
     }
 
-    // ── Xóa sân ──────────────────────────────────────────────
     @Transactional
     public void xoaSan(Long sanId) {
         if (!sanBongRepository.existsById(sanId)) {
@@ -62,31 +59,26 @@ public class AdminService {
         }
         sanBongRepository.deleteById(sanId);
     }
-
-    // ── Thống kê tổng quan toàn hệ thống ─────────────────────
     @Transactional(readOnly = true)
     public Map<String, Object> thongKeTongQuan() {
         long tongNguoiDung = nguoiDungRepository.count();
         long tongSan       = sanBongRepository.count();
         long tongPhieu     = phieuDatSanRepository.count();
 
-        // Tổng doanh thu tất cả chủ sân
         BigDecimal tongDoanhThu = phieuDatSanRepository.findAll()
                 .stream()
-                .filter(p -> p.getTrangThai() == football_field_booking.demo.entity.PhieuDatSan.TrangThai.DA_DUYET
-                          && p.getTrangThaiThanhToan() == football_field_booking.demo.entity.PhieuDatSan.TrangThaiThanhToan.DA_THANH_TOAN)
+                .filter(p -> p.getTrangThai() == football_field_booking.demo.entity.PhieuDatSan.TrangThai.DA_DUYET)
                 .map(football_field_booking.demo.entity.PhieuDatSan::getTongTien)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return Map.of(
-            "tongNguoiDung", tongNguoiDung,
-            "tongSan",       tongSan,
-            "tongPhieu",     tongPhieu,
-            "tongDoanhThu",  tongDoanhThu
+                "tongNguoiDung", tongNguoiDung,
+                "tongSan",       tongSan,
+                "tongPhieu",     tongPhieu,
+                "tongDoanhThu",  tongDoanhThu
         );
     }
 
-    // ── Lấy tất cả sân (admin xem) ───────────────────────────
     @Transactional(readOnly = true)
     public List<SanBongResponse> layTatCaSan() {
         return sanBongRepository.findAll()

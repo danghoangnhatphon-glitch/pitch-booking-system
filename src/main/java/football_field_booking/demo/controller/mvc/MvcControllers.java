@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-// ================================================================
-// ADMIN CONTROLLER
-// ================================================================
+
 @Controller
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
@@ -27,7 +25,7 @@ import java.util.Map;
 class AdminMvcController {
 
     private final AdminService adminService;
-
+    private final DatSanService datSanService;
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         Map<String, Object> tk = adminService.thongKeTongQuan();
@@ -38,10 +36,10 @@ class AdminMvcController {
         model.addAttribute("danhSachNguoiDung", adminService.layTatCaNguoiDung());
         model.addAttribute("danhSachSan",       adminService.layTatCaSan());
         model.addAttribute("currentPage", "admin");
+        model.addAttribute("danhSachPhieu", datSanService.layTatCaPhieu());
         return "admin/dashboard";
     }
 
-    // ── API endpoints cho JS gọi ─────────────────────────────
     @PatchMapping("/api/nguoi-dung/{id}/khoa")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> khoaTaiKhoan(@PathVariable Long id) {
@@ -64,9 +62,7 @@ class AdminMvcController {
     }
 }
 
-// ================================================================
-// CHU SAN CONTROLLER
-// ================================================================
+
 @Controller
 @RequestMapping("/chusan")
 @PreAuthorize("hasRole('CHU_SAN')")
@@ -90,7 +86,7 @@ class ChuSanMvcController {
         return "chusan/dashboard";
     }
 
-    // ── Duyệt phiếu ─────────────────────────────────────────
+
     @PostMapping("/duyet-phieu/{id}")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> duyetPhieu(
@@ -100,7 +96,6 @@ class ChuSanMvcController {
         return ResponseEntity.ok(ApiResponse.ok("Duyệt phiếu thành công"));
     }
 
-    // ── Từ chối phiếu ────────────────────────────────────────
     @PostMapping("/tu-choi-phieu/{id}")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> tuChoiPhieu(
@@ -110,7 +105,6 @@ class ChuSanMvcController {
         return ResponseEntity.ok(ApiResponse.ok("Đã từ chối phiếu"));
     }
 
-    // ── Đổi trạng thái sân ───────────────────────────────────
     @PostMapping("/doi-trang-thai-san")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> doiTrangThaiSan(
@@ -121,7 +115,6 @@ class ChuSanMvcController {
         return ResponseEntity.ok(ApiResponse.ok("Cập nhật thành công"));
     }
 
-    // ── Cập nhật ngân hàng ───────────────────────────────────
     @PostMapping("/cap-nhat-ngan-hang")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> capNhatNganHang(
@@ -137,9 +130,7 @@ class ChuSanMvcController {
     }
 }
 
-// ================================================================
-// KHACH HANG CONTROLLER
-// ================================================================
+
 @Controller
 @RequestMapping("/dat-san")
 @PreAuthorize("hasRole('KHACH_HANG')")
@@ -149,7 +140,7 @@ class KhachHangMvcController {
     private final DatSanService datSanService;
     private final CocService    cocService;
 
-    // ── Lịch sử đặt sân ──────────────────────────────────────
+
     @GetMapping("/lich-su")
     public String lichSu(@AuthenticationPrincipal NguoiDung nguoiDung, Model model) {
         model.addAttribute("danhSachPhieu",
@@ -158,14 +149,14 @@ class KhachHangMvcController {
         return "khachhang/lich-su";
     }
 
-    // ── Trang thanh toán cọc ─────────────────────────────────
+
     @GetMapping("/{id}/thanh-toan-coc")
     public String trangThanhToanCoc(
             @PathVariable Long id,
             @AuthenticationPrincipal NguoiDung nguoiDung,
             Model model) {
 
-        // Lấy thông tin phiếu
+
         var phieuList = datSanService.layLichSu(nguoiDung.getId());
         var phieu = phieuList.stream()
                 .filter(p -> p.getId().equals(id))
@@ -175,7 +166,6 @@ class KhachHangMvcController {
 
         model.addAttribute("phieu", phieu);
 
-        // Lấy thông tin ngân hàng chủ sân
         try {
             Map<String, String> nganhang = cocService.layThongTinNganHang(id);
             model.addAttribute("tenNganHang", nganhang.get("tenNganHang"));
@@ -192,7 +182,6 @@ class KhachHangMvcController {
         return "khachhang/thanh-toan-coc";
     }
 
-    // ── Xác nhận đã chuyển khoản cọc ────────────────────────
     @PostMapping("/{id}/xac-nhan-coc")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> xacNhanCoc(

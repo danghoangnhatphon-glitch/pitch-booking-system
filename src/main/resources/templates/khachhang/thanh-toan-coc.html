@@ -59,7 +59,7 @@
                 Tiền cọc 30%
               </span>
               <span style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--amber);"
-                    th:text="${#numbers.formatInteger(phieu.tienCoc,3,'COMMA')} + 'đ'"
+                    th:text="${#numbers.formatInteger(phieu.tongTien * 30 / 100, 3, 'COMMA')} + 'đ'"
                     id="so-tien-coc">0đ</span>
             </div>
           </div>
@@ -106,7 +106,7 @@
               <div style="text-align:center;">
                 <div style="background:white;padding:12px;border-radius:var(--radius-md);display:inline-block;">
                   <!-- QR VietQR tự động generate từ thông tin tài khoản -->
-                  <img th:src="'https://img.vietqr.io/image/' + ${maNganHang} + '-' + ${soTaiKhoan} + '-compact2.png?amount=' + ${phieu.tienCoc} + '&addInfo=COC+SAN+' + ${phieu.id} + '&accountName=' + ${tenChuTk}"
+                  <img th:src="'https://img.vietqr.io/image/' + ${maNganHang} + '-' + ${soTaiKhoan} + '-compact2.png?amount=' + (${phieu.tongTien * 30 / 100}) + '&addInfo=COC+SAN+' + ${phieu.id} + '&accountName=' + ${tenChuTk}"
                        style="width:180px;height:180px;" alt="QR chuyển khoản"/>
                 </div>
                 <div style="font-size:12px;color:var(--slate-400);margin-top:8px;">Quét mã để chuyển khoản</div>
