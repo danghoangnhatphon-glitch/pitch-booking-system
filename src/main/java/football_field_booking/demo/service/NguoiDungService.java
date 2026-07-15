@@ -25,23 +25,10 @@ public class NguoiDungService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
 
-        System.out.println(">>> Load user: [" + email + "]");
-
-        NguoiDung user = nguoiDungRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    System.out.println(">>> KHÔNG TÌM THẤY email này trong DB!");
-                    return new UsernameNotFoundException("Không tìm thấy: " + email);
-                });
-
-        System.out.println(">>> Tìm thấy: " + user.getEmail());
-        System.out.println(">>> Hash trong DB: " + user.getMatKhau());
-        System.out.println(">>> isActive: " + user.isActive());
-        System.out.println(">>> Test match: " +
-                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
-                        .matches("123456", user.getMatKhau()));
-        System.out.println(">>> Hash chuẩn của 123456: " +
-                new BCryptPasswordEncoder().encode("123456"));
-        return user;
+        return nguoiDungRepository.findByEmail(email)
+                .orElseThrow(() ->
+                    new UsernameNotFoundException("Không tìm thấy: " + email)
+                );
     }
     @Transactional
     public NguoiDungResponse dangKy(DangKyRequest request) {

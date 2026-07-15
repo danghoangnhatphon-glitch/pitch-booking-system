@@ -193,12 +193,12 @@ GO
 -- DỮ LIỆU MẪU (seed data)
 -- ============================================================
 
--- Tài khoản mẫu (password đều là "$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse" đã BCrypt)
+-- Tài khoản mẫu (mật khẩu đều là "123456", đã băm bằng BCrypt)
 INSERT INTO nguoi_dung (ho_ten, email, mat_khau, so_dien_thoai, vai_tro) VALUES
-(N'Admin Hệ Thống',  'admin@sanbong.vn',   '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0900000001', 'ADMIN'),
-(N'Nguyễn Văn Chủ',  'chusan@sanbong.vn',  '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0900000002', 'CHU_SAN'),
-(N'Trần Văn Khách',  'khach1@gmail.com',   '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0900033344', 'KHACH_HANG'),
-(N'Lê Thị Bình',     'khach2@gmail.com',   '$2a$10$$2a$10$$2a$10$6OoeF8Q0D/N8KGSygyMDAeSCpVCk5EogxoqbdHzd21zzErvpLOmse', '0987654321', 'KHACH_HANG');
+(N'Admin Hệ Thống',  'admin@sanbong.vn',   '$2b$10$h27Kn/S6V9UYicKV8AYeJO/10GbHKAujMewx60sxgveGkuYCpP4N.', '0900000001', 'ADMIN'),
+(N'Nguyễn Văn Chủ',  'chusan@sanbong.vn',  '$2b$10$h27Kn/S6V9UYicKV8AYeJO/10GbHKAujMewx60sxgveGkuYCpP4N.', '0900000002', 'CHU_SAN'),
+(N'Trần Văn Khách',  'khach1@gmail.com',   '$2b$10$h27Kn/S6V9UYicKV8AYeJO/10GbHKAujMewx60sxgveGkuYCpP4N.', '0900033344', 'KHACH_HANG'),
+(N'Lê Thị Bình',     'khach2@gmail.com',   '$2b$10$h27Kn/S6V9UYicKV8AYeJO/10GbHKAujMewx60sxgveGkuYCpP4N.', '0987654321', 'KHACH_HANG');
 GO
 
 -- Sân bóng mẫu (chu_san_id = 2 là Nguyễn Văn Chủ)

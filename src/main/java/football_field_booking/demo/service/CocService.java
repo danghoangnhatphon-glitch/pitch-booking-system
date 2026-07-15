@@ -78,7 +78,7 @@ public class CocService {
 
         chuSan.setTenNganHang(tenNganHang);
         chuSan.setSoTaiKhoan(soTaiKhoan);
-        chuSan.setTenChuTk(tenChuTk.toUpperCase());
+        chuSan.setTenChuTk(tenChuTk != null ? tenChuTk.toUpperCase() : null);
         nguoiDungRepository.save(chuSan);
     }
 

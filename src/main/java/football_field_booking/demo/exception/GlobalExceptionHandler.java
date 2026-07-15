@@ -29,7 +29,11 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .badRequest()  // HTTP 400
-                .body(ApiResponse.error("Dữ liệu không hợp lệ"));
+                .body(ApiResponse.<Map<String, String>>builder()
+                        .success(false)
+                        .message("Dữ liệu không hợp lệ")
+                        .data(errors)
+                        .build());
     }
 
     @ExceptionHandler(AppException.ResourceNotFoundException.class)
