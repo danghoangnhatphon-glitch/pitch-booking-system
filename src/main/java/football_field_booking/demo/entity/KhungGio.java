@@ -27,6 +27,7 @@ public class KhungGio {
 
 
     @Column(name = "la_gio_cao_diem", nullable = false)
+    @Builder.Default
     private boolean laGioCaoDiem = false;
 
     @OneToMany(mappedBy = "khungGio", fetch = FetchType.LAZY)

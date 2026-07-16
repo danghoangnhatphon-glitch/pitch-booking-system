@@ -33,10 +33,12 @@ public class PhieuDatSan {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai", nullable = false, length = 20)
+    @Builder.Default
     private TrangThai trangThai = TrangThai.CHO_DUYET;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai_thanh_toan", nullable = false, length = 20)
+    @Builder.Default
     private TrangThaiThanhToan trangThaiThanhToan = TrangThaiThanhToan.CHUA_THANH_TOAN;
 
     @Enumerated(EnumType.STRING)
@@ -49,6 +51,7 @@ public class PhieuDatSan {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai_coc", length = 20)
+    @Builder.Default
     private TrangThaiCoc trangThaiCoc = TrangThaiCoc.CHUA_COC;
 
     @Column(name = "thoi_gian_coc")

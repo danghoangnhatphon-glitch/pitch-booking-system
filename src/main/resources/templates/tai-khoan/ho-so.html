@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments/layout :: head('Hồ sơ của tôi')}"></head>
+<body class="page-wrapper">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="main-content">
+  <div class="container" style="max-width:640px;">
+
+    <div class="page-header">
+      <h1>Hồ sơ của tôi</h1>
+      <p>Xem và cập nhật thông tin cá nhân</p>
+    </div>
+
+    <!-- Ảnh đại diện + thông tin cơ bản -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-body" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+        <div style="position:relative;">
+          <img id="hs_avatarPreview"
+               th:src="${nguoiDung.anhDaiDien != null and nguoiDung.anhDaiDien != '' } ? ${nguoiDung.anhDaiDien} : 'https://api.dicebear.com/7.x/initials/svg?seed=' + ${nguoiDung.hoTen}"
+               style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--slate-600);">
+        </div>
+        <div>
+          <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--white);" th:text="${nguoiDung.hoTen}">Họ tên</div>
+          <div style="font-size:14px;color:var(--slate-400);" th:text="${nguoiDung.email}">email@example.com</div>
+          <div style="margin-top:6px;">
+            <span class="badge" th:switch="${nguoiDung.vaiTro.name()}" style="background:var(--green-700);color:var(--white);">
+              <span th:case="'ADMIN'">Quản trị viên</span>
+              <span th:case="'CHU_SAN'">Chủ sân</span>
+              <span th:case="'KHACH_HANG'">Khách hàng</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form cập nhật thông tin -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-body">
+        <h3 style="color:var(--white);margin-bottom:16px;">Thông tin cá nhân</h3>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:block;color:var(--slate-300);font-size:14px;margin-bottom:6px;">Ảnh đại diện</label>
+          <input type="file" id="hs_avatarFile" accept="image/jpeg,image/png,image/webp,image/gif" class="form-control" onchange="uploadAvatar()">
+          <div id="hs_avatarStatus" style="font-size:12px;color:var(--slate-400);margin-top:4px;"></div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:block;color:var(--slate-300);font-size:14px;margin-bottom:6px;">Họ tên</label>
+          <input type="text" id="hs_hoTen" class="form-control" th:value="${nguoiDung.hoTen}">
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:block;color:var(--slate-300);font-size:14px;margin-bottom:6px;">Email</label>
+          <input type="text" class="form-control" th:value="${nguoiDung.email}" disabled style="opacity:0.6;">
+        </div>
+
+        <div style="margin-bottom:18px;">
+          <label style="display:block;color:var(--slate-300);font-size:14px;margin-bottom:6px;">Số điện thoại</label>
+          <input type="text" id="hs_soDienThoai" class="form-control" th:value="${nguoiDung.soDienThoai}">
+        </div>
+
+        <button onclick="capNhatThongTin()" class="btn btn-primary">Lưu thay đổi</button>
+      </div>
+    </div>
+
+    <!-- Đổi mật khẩu -->
+    <div class="card">
+      <div class="card-body">
+        <h3 style="color:var(--white);margin-bottom:16px;">Đổi mật khẩu</h3>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:block;color:var(--slate-300);font-size:14px;margin-bottom:6px;">Mật khẩu hiện tại</label>
+          <input type="password" id="hs_matKhauCu" class="form-control">
+        </div>
+
+        <div style="margin-bottom:18px;">
+          <label style="display:block;color:var(--slate-300);font-size:14px;margin-bottom:6px;">Mật khẩu mới</label>
+          <input type="password" id="hs_matKhauMoi" class="form-control" placeholder="Tối thiểu 6 ký tự">
+        </div>
+
+        <button onclick="doiMatKhau()" class="btn btn-outline">Đổi mật khẩu</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: toast}"></div>
+
+<script th:src="@{/js/main.js}"></script>
+<script>
+  let avatarUrlMoi = null;
+
+  function uploadAvatar() {
+    const fileInput = document.getElementById('hs_avatarFile');
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const statusEl = document.getElementById('hs_avatarStatus');
+    statusEl.textContent = 'Đang tải lên...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/api/upload/avatar', { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          avatarUrlMoi = d.data.url;
+          document.getElementById('hs_avatarPreview').src = d.data.url;
+          statusEl.textContent = '✅ Đã tải lên, nhấn "Lưu thay đổi" để áp dụng';
+        } else {
+          statusEl.textContent = '❌ ' + d.message;
+        }
+      })
+      .catch(() => { statusEl.textContent = '❌ Lỗi kết nối, thử lại'; });
+  }
+
+  function capNhatThongTin() {
+    const data = {
+      hoTen: document.getElementById('hs_hoTen').value.trim(),
+      soDienThoai: document.getElementById('hs_soDienThoai').value.trim(),
+      anhDaiDien: avatarUrlMoi
+    };
+
+    if (!data.hoTen) {
+      showToast('Vui lòng nhập họ tên', 'error');
+      return;
+    }
+
+    fetch('/api/nguoi-dung/toi', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          showToast('Cập nhật thông tin thành công!');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast(d.message || 'Có lỗi xảy ra', 'error');
+        }
+      })
+      .catch(() => showToast('Lỗi kết nối, vui lòng thử lại', 'error'));
+  }
+
+  function doiMatKhau() {
+    const matKhauCu = document.getElementById('hs_matKhauCu').value;
+    const matKhauMoi = document.getElementById('hs_matKhauMoi').value;
+
+    if (!matKhauCu || !matKhauMoi) {
+      showToast('Vui lòng nhập đầy đủ mật khẩu', 'error');
+      return;
+    }
+    if (matKhauMoi.length < 6) {
+      showToast('Mật khẩu mới phải từ 6 ký tự trở lên', 'error');
+      return;
+    }
+
+    fetch('/api/nguoi-dung/doi-mat-khau', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matKhauCu, matKhauMoi })
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          showToast('Đổi mật khẩu thành công!');
+          document.getElementById('hs_matKhauCu').value = '';
+          document.getElementById('hs_matKhauMoi').value = '';
+        } else {
+          showToast(d.message || 'Có lỗi xảy ra', 'error');
+        }
+      })
+      .catch(() => showToast('Lỗi kết nối, vui lòng thử lại', 'error'));
+  }
+</script>
+</body>
+</html>

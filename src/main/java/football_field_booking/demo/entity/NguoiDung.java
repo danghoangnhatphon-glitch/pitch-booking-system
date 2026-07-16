@@ -37,12 +37,14 @@ public class NguoiDung implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "vai_tro", nullable = false, length = 20)
+    @Builder.Default
     private VaiTro vaiTro = VaiTro.KHACH_HANG;
 
     @Column(name = "anh_dai_dien", length = 500)
     private String anhDaiDien;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean isActive = true;
 
     @Column(name = "ten_ngan_hang", length = 100)

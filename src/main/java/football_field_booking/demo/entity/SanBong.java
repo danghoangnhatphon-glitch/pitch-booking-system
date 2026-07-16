@@ -45,6 +45,7 @@ public class SanBong {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai", nullable = false, length = 20)
+    @Builder.Default
     private TrangThai trangThai = TrangThai.HOAT_DONG;
 
     @Column(name = "created_at", nullable = false, updatable = false)

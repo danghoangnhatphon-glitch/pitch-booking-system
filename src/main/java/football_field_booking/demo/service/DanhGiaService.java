@@ -29,6 +29,9 @@ public class DanhGiaService {
         if (!phieu.getNguoiDat().getId().equals(nguoiDungId)) {
             throw new AppException.ForbiddenException("Bạn không có quyền đánh giá phiếu này");
         }
+        if (phieu.getTrangThai() != PhieuDatSan.TrangThai.DA_DUYET) {
+            throw new AppException.BadRequestException("Chỉ có thể đánh giá phiếu đã được duyệt");
+        }
         if (danhGiaRepository.existsByPhieuDatId(phieu.getId())) {
             throw new AppException.BadRequestException("Phiếu này đã được đánh giá");
         }
@@ -45,5 +48,33 @@ public class DanhGiaService {
 
 
         danhGiaRepository.save(danhGia);
+    }
+
+    @Transactional
+    public void suaDanhGia(Long phieuDatId, DanhGiaRequest request, Long nguoiDungId) {
+
+        DanhGia danhGia = danhGiaRepository.findByPhieuDatId(phieuDatId)
+                .orElseThrow(() -> new AppException.ResourceNotFoundException("Không tìm thấy đánh giá"));
+
+        if (!danhGia.getNguoiDanhGia().getId().equals(nguoiDungId)) {
+            throw new AppException.ForbiddenException("Bạn không có quyền sửa đánh giá này");
+        }
+
+        danhGia.setSoSao(request.getSoSao().byteValue());
+        danhGia.setNoiDung(request.getNoiDung());
+        danhGiaRepository.save(danhGia);
+    }
+
+    @Transactional
+    public void xoaDanhGia(Long phieuDatId, Long nguoiDungId) {
+
+        DanhGia danhGia = danhGiaRepository.findByPhieuDatId(phieuDatId)
+                .orElseThrow(() -> new AppException.ResourceNotFoundException("Không tìm thấy đánh giá"));
+
+        if (!danhGia.getNguoiDanhGia().getId().equals(nguoiDungId)) {
+            throw new AppException.ForbiddenException("Bạn không có quyền xóa đánh giá này");
+        }
+
+        danhGiaRepository.delete(danhGia);
     }
 }

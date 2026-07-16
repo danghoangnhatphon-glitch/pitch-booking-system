@@ -33,6 +33,14 @@ public class PhieuDatSanResponse {
 
     private List<ChiTietResponse> danhSachChiTiet;
 
+    private DanhGiaInfo danhGia;
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class DanhGiaInfo {
+        private Integer soSao;
+        private String noiDung;
+    }
+
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class ChiTietResponse {
         private Long sanId;

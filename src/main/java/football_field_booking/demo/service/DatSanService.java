@@ -24,6 +24,7 @@ public class DatSanService {
     private final KhungGioRepository       khungGioRepository;
     private final GiaSanRepository         giaSanRepository;
     private final NguoiDungRepository      nguoiDungRepository;
+    private final DanhGiaRepository        danhGiaRepository;
 
 
     @Transactional
@@ -109,11 +110,22 @@ public class DatSanService {
 
     @Transactional(readOnly = true)
     public List<PhieuDatSanResponse> layLichSu(Long nguoiDatId) {
-        return phieuDatSanRepository
+        List<PhieuDatSanResponse> danhSach = phieuDatSanRepository
                 .findByNguoiDatIdOrderByCreatedAtDesc(nguoiDatId)
                 .stream()
                 .map(PhieuDatSanResponse::from)
                 .toList();
+
+        danhSach.forEach(phieu ->
+            danhGiaRepository.findByPhieuDatId(phieu.getId()).ifPresent(dg ->
+                phieu.setDanhGia(PhieuDatSanResponse.DanhGiaInfo.builder()
+                        .soSao(dg.getSoSao() != null ? dg.getSoSao().intValue() : null)
+                        .noiDung(dg.getNoiDung())
+                        .build())
+            )
+        );
+
+        return danhSach;
     }
 
     @Transactional

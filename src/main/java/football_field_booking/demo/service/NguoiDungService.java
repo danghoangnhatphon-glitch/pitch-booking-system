@@ -1,6 +1,8 @@
 package football_field_booking.demo.service;
 
+import football_field_booking.demo.dto.request.CapNhatThongTinRequest;
 import football_field_booking.demo.dto.request.DangKyRequest;
+import football_field_booking.demo.dto.request.DoiMatKhauRequest;
 import football_field_booking.demo.dto.response.NguoiDungResponse;
 import football_field_booking.demo.entity.NguoiDung;
 import football_field_booking.demo.exception.AppException;
@@ -57,5 +59,37 @@ public class NguoiDungService implements UserDetailsService {
                     new AppException.ResourceNotFoundException("Không tìm thấy người dùng #" + id)
                 );
         return NguoiDungResponse.from(nguoiDung);
+    }
+
+    @Transactional
+    public NguoiDungResponse capNhatThongTin(Long id, CapNhatThongTinRequest request) {
+        NguoiDung nguoiDung = nguoiDungRepository.findById(id)
+                .orElseThrow(() ->
+                    new AppException.ResourceNotFoundException("Không tìm thấy người dùng #" + id)
+                );
+
+        nguoiDung.setHoTen(request.getHoTen());
+        nguoiDung.setSoDienThoai(request.getSoDienThoai());
+        if (request.getAnhDaiDien() != null && !request.getAnhDaiDien().isBlank()) {
+            nguoiDung.setAnhDaiDien(request.getAnhDaiDien());
+        }
+
+        NguoiDung saved = nguoiDungRepository.save(nguoiDung);
+        return NguoiDungResponse.from(saved);
+    }
+
+    @Transactional
+    public void doiMatKhau(Long id, DoiMatKhauRequest request) {
+        NguoiDung nguoiDung = nguoiDungRepository.findById(id)
+                .orElseThrow(() ->
+                    new AppException.ResourceNotFoundException("Không tìm thấy người dùng #" + id)
+                );
+
+        if (!passwordEncoder.matches(request.getMatKhauCu(), nguoiDung.getMatKhau())) {
+            throw new AppException.BadRequestException("Mật khẩu hiện tại không đúng");
+        }
+
+        nguoiDung.setMatKhau(passwordEncoder.encode(request.getMatKhauMoi()));
+        nguoiDungRepository.save(nguoiDung);
     }
 }

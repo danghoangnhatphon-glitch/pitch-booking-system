@@ -91,10 +91,25 @@
                 Hủy phiếu
               </button>
 
-              <button th:if="${phieu.trangThai.name() == 'DA_DUYET' and phieu.trangThaiCoc != null and phieu.trangThaiCoc.name() == 'DA_COC'}" th:onclick="moFormDanhGia([[${phieu.id}]], [[${phieu.danhSachChiTiet[0].sanId}]])" class="btn btn-outline" style="border-color: #fbbf24; color: #fbbf24;">
+              <button th:if="${phieu.trangThai.name() == 'DA_DUYET' and phieu.trangThaiCoc != null and phieu.trangThaiCoc.name() == 'DA_COC' and phieu.danhGia == null}" th:onclick="moFormDanhGia([[${phieu.id}]], [[${phieu.danhSachChiTiet[0].sanId}]])" class="btn btn-outline" style="border-color: #fbbf24; color: #fbbf24;">
                 ⭐ Viết đánh giá
               </button>
+
+              <button th:if="${phieu.danhGia != null}"
+                      th:attr="data-phieu-id=${phieu.id},data-san-id=${phieu.danhSachChiTiet[0].sanId},data-so-sao=${phieu.danhGia.soSao},data-noi-dung=${phieu.danhGia.noiDung}"
+                      onclick="suaFormDanhGiaTuNut(this)"
+                      class="btn btn-outline btn-sm" style="border-color: #fbbf24; color: #fbbf24;">
+                ✏️ Sửa đánh giá
+              </button>
+              <button th:if="${phieu.danhGia != null}" th:onclick="'xoaDanhGia(' + ${phieu.id} + ')'" class="btn btn-danger btn-sm">
+                🗑️ Xóa đánh giá
+              </button>
             </div>
+          </div>
+
+          <div th:if="${phieu.danhGia != null}" style="margin-top:12px;padding:10px 14px;background:var(--slate-700);border-radius:var(--radius-sm);">
+            <div style="color:#fbbf24;font-size:14px;" th:text="${'⭐'.repeat(phieu.danhGia.soSao)}">⭐⭐⭐⭐⭐</div>
+            <div style="color:var(--slate-300);font-size:13px;margin-top:4px;" th:text="${phieu.danhGia.noiDung}">Nhận xét</div>
           </div>
 
         </div>
@@ -154,11 +169,38 @@
   }
 
   // Xử lý Form Đánh Giá
+  let dangSuaDanhGia = false;
+
   function moFormDanhGia(phieuId, sanId) {
+      dangSuaDanhGia = false;
       document.getElementById('dg_phieuId').value = phieuId;
       document.getElementById('dg_sanId').value = sanId;
+      document.getElementById('dg_soSao').value = '5';
+      document.getElementById('dg_noiDung').value = '';
+      document.querySelector('#formDanhGia h3').textContent = '⭐ Đánh giá sân bóng';
       document.getElementById('formDanhGia').style.display = 'block';
       document.getElementById('formDanhGiaOverlay').style.display = 'block';
+  }
+
+  function suaFormDanhGia(phieuId, sanId, soSao, noiDung) {
+      dangSuaDanhGia = true;
+      document.getElementById('dg_phieuId').value = phieuId;
+      document.getElementById('dg_sanId').value = sanId;
+      document.getElementById('dg_soSao').value = String(soSao);
+      document.getElementById('dg_noiDung').value = noiDung;
+      document.querySelector('#formDanhGia h3').textContent = '✏️ Sửa đánh giá';
+      document.getElementById('formDanhGia').style.display = 'block';
+      document.getElementById('formDanhGiaOverlay').style.display = 'block';
+  }
+
+  // Đọc data-* attribute từ nút bấm — an toàn với mọi ký tự đặc biệt trong nội dung đánh giá
+  function suaFormDanhGiaTuNut(btn) {
+      suaFormDanhGia(
+          btn.dataset.phieuId,
+          btn.dataset.sanId,
+          btn.dataset.soSao,
+          btn.dataset.noiDung
+      );
   }
 
   function dongFormDanhGia() {
@@ -168,8 +210,9 @@
   }
 
   function guiDanhGia() {
+      const phieuId = document.getElementById('dg_phieuId').value;
       const data = {
-          phieuDatId: parseInt(document.getElementById('dg_phieuId').value),
+          phieuDatId: parseInt(phieuId),
           sanId: parseInt(document.getElementById('dg_sanId').value),
           soSao: parseInt(document.getElementById('dg_soSao').value),
           noiDung: document.getElementById('dg_noiDung').value
@@ -180,15 +223,18 @@
           return;
       }
 
-      fetch('/api/danh-gia', {
-          method: 'POST',
+      const url = dangSuaDanhGia ? `/api/danh-gia/${phieuId}` : '/api/danh-gia';
+      const method = dangSuaDanhGia ? 'PUT' : 'POST';
+
+      fetch(url, {
+          method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
       })
       .then(r => r.json())
       .then(d => {
           if (d.success) {
-              showToast('Cảm ơn bạn đã đánh giá!');
+              showToast(dangSuaDanhGia ? 'Cập nhật đánh giá thành công!' : 'Cảm ơn bạn đã đánh giá!');
               dongFormDanhGia();
               setTimeout(() => location.reload(), 1500);
           } else {
@@ -199,6 +245,21 @@
           console.error(err);
           showToast('Lỗi kết nối, vui lòng thử lại', 'error');
       });
+  }
+
+  function xoaDanhGia(phieuId) {
+      if (!confirm('Bạn chắc chắn muốn xóa đánh giá này?')) return;
+      fetch(`/api/danh-gia/${phieuId}`, { method: 'DELETE' })
+      .then(r => r.json())
+      .then(d => {
+          if (d.success) {
+              showToast('Đã xóa đánh giá');
+              setTimeout(() => location.reload(), 1000);
+          } else {
+              showToast(d.message, 'error');
+          }
+      })
+      .catch(() => showToast('Lỗi kết nối, vui lòng thử lại', 'error'));
   }
 </script>
 </body>

@@ -132,6 +132,22 @@ class ChuSanMvcController {
 
 
 @Controller
+@RequestMapping("/tai-khoan")
+@RequiredArgsConstructor
+class TaiKhoanMvcController {
+
+    private final football_field_booking.demo.service.NguoiDungService nguoiDungService;
+
+    @GetMapping("/ho-so")
+    public String hoSo(@AuthenticationPrincipal NguoiDung nguoiDung, Model model) {
+        model.addAttribute("nguoiDung", nguoiDungService.layThongTin(nguoiDung.getId()));
+        model.addAttribute("currentPage", "ho-so");
+        return "tai-khoan/ho-so";
+    }
+}
+
+
+@Controller
 @RequestMapping("/dat-san")
 @PreAuthorize("hasRole('KHACH_HANG')")
 @RequiredArgsConstructor
