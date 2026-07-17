@@ -42,21 +42,21 @@
       </div>
       <div class="card">
         <div class="card-header">📊 Doanh thu theo tháng</div>
-        <div style="padding:16px;">
-          <div th:each="entry : ${doanhThu}"
-               style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--slate-700);">
-            <span style="color:var(--slate-200);" th:text="${entry.key}">2025-06</span>
-            <div style="flex:1;margin:0 16px;background:var(--slate-700);border-radius:4px;height:8px;overflow:hidden;">
-              <div style="background:var(--green-400);height:100%;border-radius:4px;"
-                   th:style="'width:' + ${tongQuan.tongDoanhThu > 0 ? (entry.value * 100 / tongQuan.tongDoanhThu) : 0} + '%'"></div>
-            </div>
-            <span style="font-weight:700;color:var(--amber);font-family:var(--font-display);font-size:18px;"
-                  th:text="${#numbers.formatInteger(entry.value, 3, 'COMMA')} + 'đ'">0đ</span>
+        <div style="padding:20px;">
+          <div th:if="${not #maps.isEmpty(doanhThu)}" style="position:relative;height:280px;">
+            <canvas id="doanhThuChart"></canvas>
           </div>
-          <div th:if="${#maps.isEmpty(doanhThu)}"
-               style="text-align:center;color:var(--slate-400);padding:24px;font-size:14px;">
-            Chưa có dữ liệu doanh thu
+          <div th:if="${#maps.isEmpty(doanhThu)}" class="empty-state">
+            <div class="icon">📈</div>
+            <div class="title">Chưa có dữ liệu doanh thu</div>
+            <div class="sub">Biểu đồ sẽ hiển thị khi có phiếu đặt được duyệt</div>
           </div>
+
+          <!-- Dữ liệu doanh thu cho Chart.js -->
+          <script th:if="${not #maps.isEmpty(doanhThu)}" th:inline="javascript">
+            const doanhThuNhan = [[${doanhThu.keySet()}]];
+            const doanhThuGiaTri = [[${doanhThu.values()}]];
+          </script>
         </div>
       </div>
     </div>
@@ -219,6 +219,7 @@
 }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script th:src="@{/js/main.js}"></script>
 <script>
 // ── Tab switching ─────────────────────────────────────────
@@ -231,6 +232,50 @@ function doiTab(tabId) {
   });
   document.getElementById(tabId).style.display = 'block';
   document.getElementById('btn-' + tabId.replace('tab-','')).classList.add('active-tab');
+}
+
+// ── Biểu đồ doanh thu theo tháng ────────────────────────────
+if (typeof doanhThuNhan !== 'undefined' && document.getElementById('doanhThuChart')) {
+  const canvasStyle = getComputedStyle(document.documentElement);
+  new Chart(document.getElementById('doanhThuChart'), {
+    type: 'bar',
+    data: {
+      labels: doanhThuNhan,
+      datasets: [{
+        label: 'Doanh thu (đ)',
+        data: doanhThuGiaTri,
+        backgroundColor: canvasStyle.getPropertyValue('--green-400').trim() || '#22a83e',
+        borderRadius: 6,
+        maxBarThickness: 48
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => new Intl.NumberFormat('vi-VN').format(ctx.parsed.y) + 'đ'
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: canvasStyle.getPropertyValue('--slate-700').trim() },
+          ticks: {
+            color: canvasStyle.getPropertyValue('--slate-400').trim(),
+            callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value)
+          }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: canvasStyle.getPropertyValue('--slate-400').trim() }
+        }
+      }
+    }
+  });
 }
 
 // ── Duyệt phiếu ──────────────────────────────────────────

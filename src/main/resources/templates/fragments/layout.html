@@ -6,6 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title th:text="${title} + ' — SânBóng.vn'">SânBóng.vn</title>
   <link rel="stylesheet" th:href="@{/css/main.css}"/>
+  <script>
+    // Áp dụng theme đã lưu NGAY LẬP TỨC (trước khi CSS/HTML render) để tránh nháy sáng/tối
+    (function() {
+      try {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <!-- ── NAVBAR ─────────────────────────────────────────── -->
@@ -17,43 +26,56 @@
       ⚽ SÂN BÓNG<span class="dot">.</span>VN
     </a>
 
-    <!-- Links -->
-    <ul class="navbar-links">
-      <li><a th:href="@{/}" th:classappend="${currentPage == 'home'} ? 'active'">Trang chủ</a></li>
-      <li><a th:href="@{/san-bong}" th:classappend="${currentPage == 'san-bong'} ? 'active'">Sân bóng</a></li>
+    <div class="navbar-right">
+      <!-- Links -->
+      <ul class="navbar-links" id="navbarLinks">
+        <li><a th:href="@{/}" th:classappend="${currentPage == 'home'} ? 'active'">Trang chủ</a></li>
+        <li><a th:href="@{/san-bong}" th:classappend="${currentPage == 'san-bong'} ? 'active'">Sân bóng</a></li>
 
-      <!-- Chưa đăng nhập -->
-      <li sec:authorize="isAnonymous()">
-        <a th:href="@{/auth/dang-nhap}" class="btn-nav-login">Đăng nhập</a>
-      </li>
+        <!-- Chưa đăng nhập -->
+        <li sec:authorize="isAnonymous()">
+          <a th:href="@{/auth/dang-nhap}" class="btn-nav-login">Đăng nhập</a>
+        </li>
 
-      <!-- Đã đăng nhập: KHACH_HANG -->
-      <li sec:authorize="hasRole('KHACH_HANG')">
-        <a th:href="@{/dat-san/lich-su}" th:classappend="${currentPage == 'lich-su'} ? 'active'">Lịch đặt của tôi</a>
-      </li>
+        <!-- Đã đăng nhập: KHACH_HANG -->
+        <li sec:authorize="hasRole('KHACH_HANG')">
+          <a th:href="@{/dat-san/lich-su}" th:classappend="${currentPage == 'lich-su'} ? 'active'">Lịch đặt của tôi</a>
+        </li>
 
-      <!-- Đã đăng nhập: CHU_SAN -->
-      <li sec:authorize="hasRole('CHU_SAN')">
-        <a th:href="@{/chusan/dashboard}" th:classappend="${currentPage == 'dashboard'} ? 'active'">Dashboard</a>
-      </li>
+        <!-- Đã đăng nhập: CHU_SAN -->
+        <li sec:authorize="hasRole('CHU_SAN')">
+          <a th:href="@{/chusan/dashboard}" th:classappend="${currentPage == 'dashboard'} ? 'active'">Dashboard</a>
+        </li>
 
-      <!-- User dropdown -->
-      <li sec:authorize="isAuthenticated()" class="navbar-user">
-        <div class="avatar" sec:authentication="name" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</div>
-        <span sec:authentication="principal.hoTen" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-        <a th:href="@{/tai-khoan/ho-so}" th:classappend="${currentPage == 'ho-so'} ? 'active'"
-           style="color:var(--slate-300);font-size:13px;margin-left:8px;">Hồ sơ</a>
-        <form th:action="@{/auth/logout}" method="post" style="display:inline;">
-          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-          <button type="submit"
-                  style="background:none;border:none;color:var(--slate-400);
-                         font-size:13px;cursor:pointer;padding:0;
-                         font-family:var(--font-body);margin-left:4px;">
-            [Thoát]
-          </button>
-        </form>
-      </li>
-    </ul>
+        <!-- User dropdown -->
+        <li sec:authorize="isAuthenticated()" class="navbar-user">
+          <div class="avatar" sec:authentication="name" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</div>
+          <span sec:authentication="principal.hoTen" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+          <a th:href="@{/tai-khoan/ho-so}" th:classappend="${currentPage == 'ho-so'} ? 'active'"
+             style="color:var(--slate-300);font-size:13px;margin-left:8px;">Hồ sơ</a>
+          <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit"
+                    style="background:none;border:none;color:var(--slate-400);
+                           font-size:13px;cursor:pointer;padding:0;
+                           font-family:var(--font-body);margin-left:4px;">
+              [Thoát]
+            </button>
+          </form>
+        </li>
+      </ul>
+
+      <!-- Theme toggle -->
+      <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Đổi giao diện sáng/tối" title="Đổi giao diện">
+        <span id="themeIconDark">🌙</span>
+        <span id="themeIconLight" style="display:none;">☀️</span>
+      </button>
+
+      <!-- Hamburger (mobile only) -->
+      <button type="button" id="navHamburger" class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Mở menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
 
   </div>
 </nav>
