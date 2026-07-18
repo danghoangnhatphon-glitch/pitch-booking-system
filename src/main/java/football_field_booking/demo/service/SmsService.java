@@ -26,7 +26,7 @@ public class SmsService {
     @Value("${sms.speedsms.sender:}")
     private String sender;
 
-    @Value("${sms.speedsms.type:4}")
+    @Value("${sms.speedsms.type:2}")
     private int smsType;
 
     private final RestClient restClient = RestClient.create();
@@ -49,13 +49,13 @@ public class SmsService {
             String basicAuth = "Basic " + Base64.getEncoder()
                     .encodeToString((accessToken + ":x").getBytes());
 
-            // sms_type=4: gửi bằng brandname MẶC ĐỊNH của SpeedSMS dành riêng cho Verify/Notify
-            // (KHÔNG cần đăng ký brandname riêng). Cố tình KHÔNG đưa key "sender" vào JSON —
-            // gửi sender="" (rỗng) bị SpeedSMS hiểu nhầm thành "có sender nhưng không tìm thấy".
+            // Theo hướng dẫn trực tiếp từ SpeedSMS: field JSON là "sms_type" + "sender",
+            // số điện thoại cần mã vùng 84 (không giữ số 0 đầu).
             Map<String, Object> body = Map.of(
                     "to", new String[]{chuanHoaSoDienThoai(soDienThoai)},
                     "content", noiDung,
-                    "sms_type", smsType
+                    "sms_type", 4,         // Chuyển sang số 4 (Brandname mặc định)
+                    "sender", "Verify"     // Điền chữ "Verify" hoặc "Notify"
             );
 
             ResponseEntity<String> response = restClient.post()
@@ -74,7 +74,7 @@ public class SmsService {
         }
     }
 
-    /** SpeedSMS yêu cầu số điện thoại không có số 0 đầu, thêm mã vùng 84 */
+    /** SpeedSMS yêu cầu định dạng 84xxxxxxxxx thay vì 0xxxxxxxxx */
     private String chuanHoaSoDienThoai(String soDienThoai) {
         if (soDienThoai.startsWith("0")) {
             return "84" + soDienThoai.substring(1);
