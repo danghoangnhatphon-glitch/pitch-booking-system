@@ -35,9 +35,7 @@ public class NguoiDungService implements UserDetailsService {
     @Transactional
     public NguoiDungResponse dangKy(DangKyRequest request) {
 
-        if (nguoiDungRepository.existsByEmail(request.getEmail())) {
-            throw new AppException.EmailDaTonTaiException(request.getEmail());
-        }
+        kiemTraEmailChuaTonTai(request.getEmail());
 
         NguoiDung nguoiDung = NguoiDung.builder()
                 .hoTen(request.getHoTen())
@@ -50,6 +48,14 @@ public class NguoiDungService implements UserDetailsService {
         NguoiDung saved = nguoiDungRepository.save(nguoiDung);
 
         return NguoiDungResponse.from(saved);
+    }
+
+    /** Ném lỗi nếu email đã được đăng ký — tách riêng để tái sử dụng ở bước gửi OTP (kiểm tra sớm, trước khi tốn phí SMS) */
+    @Transactional(readOnly = true)
+    public void kiemTraEmailChuaTonTai(String email) {
+        if (nguoiDungRepository.existsByEmail(email)) {
+            throw new AppException.EmailDaTonTaiException(email);
+        }
     }
 
     @Transactional(readOnly = true)

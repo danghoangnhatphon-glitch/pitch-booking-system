@@ -12,6 +12,14 @@
       <p>Chuyển khoản 30% để xác nhận giữ sân</p>
     </div>
 
+    <!-- Banner kết quả sau khi quay về từ VNPay -->
+    <div th:if="${param.vnpay != null and param.vnpay[0] == 'success'}" class="alert alert-success" style="margin-bottom:16px;">
+      ✅ Thanh toán VNPay thành công! Sân của bạn đã được đặt cọc.
+    </div>
+    <div th:if="${param.vnpay != null and param.vnpay[0] == 'fail'}" class="alert alert-error" style="margin-bottom:16px;">
+      ❌ Giao dịch VNPay không thành công hoặc đã bị hủy. Vui lòng thử lại hoặc chuyển khoản thủ công bên dưới.
+    </div>
+
     <!-- Trạng thái phiếu -->
     <div th:switch="${phieu.trangThai.name()}">
       <div th:case="'CHO_DUYET'" class="alert alert-info">
@@ -65,9 +73,29 @@
           </div>
         </div>
 
-        <!-- Thông tin chuyển khoản + QR -->
+        <!-- Lựa chọn 1: VNPay (khuyến nghị) -->
+        <div class="card" style="margin-bottom:20px;border:2px solid var(--green-600);">
+          <div class="card-body" style="text-align:center;padding:24px;">
+            <div style="font-size:13px;color:var(--green-300);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+              ⚡ Khuyến nghị — Xác nhận tức thì
+            </div>
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--white);margin-bottom:16px;">
+              Thanh toán qua VNPay
+            </div>
+            <button id="btnVnpay" onclick="thanhToanVnpay()" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">
+              💳 Thanh toán <span th:text="${#numbers.formatInteger(phieu.tongTien * 30 / 100, 3, 'COMMA')} + 'đ'">0đ</span> qua VNPay
+            </button>
+            <div style="font-size:12px;color:var(--slate-400);margin-top:10px;">
+              Hỗ trợ thẻ ATM nội địa, Visa/Master, QR — cọc được xác nhận ngay lập tức
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center;color:var(--slate-400);font-size:13px;margin:20px 0;">— hoặc —</div>
+
+        <!-- Lựa chọn 2: Chuyển khoản thủ công -->
         <div class="card" style="margin-bottom:20px;">
-          <div class="card-header">🏦 Thông tin chuyển khoản</div>
+          <div class="card-header">🏦 Chuyển khoản thủ công</div>
           <div class="card-body">
 
             <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;">
@@ -158,6 +186,28 @@ function copyStk() {
 function copyNoiDung() {
   navigator.clipboard.writeText(NOI_DUNG);
   showToast('Đã copy nội dung chuyển khoản!');
+}
+function thanhToanVnpay() {
+  const btn = document.getElementById('btnVnpay');
+  btn.disabled = true;
+  btn.textContent = 'Đang khởi tạo giao dịch...';
+
+  fetch(`/api/vnpay/tao-thanh-toan/${PHIEU_ID}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        window.location.href = d.data.url;
+      } else {
+        showToast(d.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '💳 Thanh toán qua VNPay';
+      }
+    })
+    .catch(() => {
+      showToast('Lỗi kết nối, vui lòng thử lại', 'error');
+      btn.disabled = false;
+      btn.textContent = '💳 Thanh toán qua VNPay';
+    });
 }
 function xacNhanDaChuyenKhoan() {
   if (!confirm('Bạn xác nhận đã chuyển khoản đặt cọc?')) return;

@@ -30,12 +30,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/chusan/**", "/admin/**","/dat-san/**"))
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/chusan/**", "/admin/**","/dat-san/**", "/vnpay/**"))
 
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers("/", "/san-bong", "/san-bong/**", "/auth/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/vnpay/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/san-bong/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/chusan/**").hasRole("CHU_SAN")

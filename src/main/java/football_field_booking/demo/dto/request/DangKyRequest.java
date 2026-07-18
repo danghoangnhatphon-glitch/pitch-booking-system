@@ -23,6 +23,7 @@ public class DangKyRequest {
     @Size(min = 6, max = 50, message = "Mật khẩu từ 6 đến 50 ký tự")
     private String matKhau;
 
+    @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(regexp = "^(03|05|07|08|09)\\d{8}$",
              message = "Số điện thoại không hợp lệ")
     private String soDienThoai;

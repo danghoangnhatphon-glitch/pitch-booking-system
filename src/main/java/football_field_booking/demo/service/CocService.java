@@ -41,10 +41,42 @@ public class CocService {
         }
 
         phieu.setTrangThaiCoc(PhieuDatSan.TrangThaiCoc.DA_COC);
+        phieu.setPhuongThucThanhToan(PhieuDatSan.PhuongThucThanhToan.CHUYEN_KHOAN);
         phieu.setThoiGianCoc(LocalDateTime.now());
 
         PhieuDatSan saved = phieuDatSanRepository.save(phieu);
         return PhieuDatSanResponse.from(saved);
+    }
+
+    /**
+     * Xác nhận cọc thành công qua VNPay. Được gọi từ cả Return URL (redirect trình
+     * duyệt) lẫn IPN (server-to-server) nên phải idempotent — gọi nhiều lần không sao.
+     */
+    @Transactional
+    public void xacNhanQuaVnpay(Long phieuId) {
+        PhieuDatSan phieu = phieuDatSanRepository.findById(phieuId)
+                .orElseThrow(() -> new AppException.ResourceNotFoundException(
+                    "Không tìm thấy phiếu #" + phieuId));
+
+        if (phieu.getTrangThaiCoc() == PhieuDatSan.TrangThaiCoc.DA_COC) {
+            return; // đã xử lý rồi (vd. Return URL và IPN cùng gọi tới) — bỏ qua, không lỗi
+        }
+
+        phieu.setTrangThaiCoc(PhieuDatSan.TrangThaiCoc.DA_COC);
+        phieu.setPhuongThucThanhToan(PhieuDatSan.PhuongThucThanhToan.VNPAY);
+        phieu.setThoiGianCoc(LocalDateTime.now());
+        phieuDatSanRepository.save(phieu);
+    }
+
+    /** Tính số tiền cọc (30% tổng tiền) — dùng chung cho cả UI hiển thị và tạo giao dịch VNPay */
+    @Transactional(readOnly = true)
+    public long tinhTienCoc(Long phieuId) {
+        PhieuDatSan phieu = phieuDatSanRepository.findById(phieuId)
+                .orElseThrow(() -> new AppException.ResourceNotFoundException(
+                    "Không tìm thấy phiếu #" + phieuId));
+        return phieu.getTongTien().multiply(java.math.BigDecimal.valueOf(30))
+                .divide(java.math.BigDecimal.valueOf(100))
+                .longValue();
     }
 
     @Transactional(readOnly = true)
